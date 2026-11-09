@@ -1,0 +1,1774 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <title>NYC Rat Sightings Dashboard</title>
+  <style>
+:root {
+  color-scheme: dark;
+  --bg: #0a1019;
+  --panel: #101a28;
+  --edge: #26364a;
+  --text: #f3f7fc;
+  --muted: #9aacbf;
+  --accent: #53dec4;
+  --accent2: #ffbb77;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; min-width: 300px; line-height: 1.45; }
+[hidden] { display: none !important; }
+button, select { font: inherit; color: inherit; }
+button, select, summary { cursor: pointer; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent2); outline-offset: 4px; }
+h1, h2, h3, p { margin: 0; }
+.shell { width: min(calc(100% - 96px), 1320px); margin-inline: auto; }
+.skip-link {
+  position: fixed; z-index: 20; left: 12px; top: 12px; clip-path: inset(50%);
+  padding: 9px 14px; background: var(--panel); border: 1px solid var(--accent); border-radius: 8px;
+}
+.skip-link:focus-visible { clip-path: none; }
+.icon-library { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon {
+  width: 19px; height: 19px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.65;
+  stroke-linecap: round; stroke-linejoin: round; vertical-align: middle;
+}
+.masthead {
+  position: relative; border-bottom: 1px solid #23354a;
+  background: radial-gradient(ellipse at 80% -10%, #173844 0%, transparent 63%), #101a28;
+}
+.masthead::before {
+  content: ""; pointer-events: none; position: absolute; inset: 0;
+  background: radial-gradient(circle, #8abfbf 0.7px, transparent 0.95px) right top / 17px 17px;
+  opacity: .19; mask-image: linear-gradient(90deg, transparent 27%, #000);
+}
+.masthead .shell { position: relative; }
+.masthead-top { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.masthead-brand { display: flex; gap: 11px; align-items: center; font-weight: 730; letter-spacing: .025em; }
+.brand-mark {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+  color: #062820; background: var(--accent);
+}
+.brand-mark .icon { width: 23px; height: 23px; }
+.brand-divider { display: inline-block; height: 13px; width: 1px; margin: 0 10px; background: #547180; vertical-align: -.1em; }
+.brand-sub { font-weight: 500; color: #a7b9c7; font-size: .82rem; letter-spacing: 0; }
+.offline-badge {
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 20px;
+  background: #0b1720b0; border: 1px solid #344a55; color: #c5d9df; white-space: nowrap; font-size: .75rem;
+}
+.offline-badge span, .scope-label::before { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.hero { padding: 16px 0 31px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.eyebrow { color: #81adba; font-size: .69rem; letter-spacing: .155em; font-weight: 780; line-height: 1.3; margin: 0 0 7px; }
+.hero-kicker { color: #80dac9; }
+h1 { font-size: clamp(2.45rem, 4.5vw, 4.45rem); font-weight: 760; line-height: 1.06; letter-spacing: -.055em; }
+.hero-description { color: #b6c7d3; margin-top: 9px; font-size: clamp(.93rem, 1.22vw, 1.09rem); }
+.borough-control { flex: 0 0 217px; }
+.borough-control label { display: block; font-size: .79rem; font-weight: 650; margin-bottom: 7px; color: #e3ebf4; }
+.select-wrap { position: relative; }
+.select-wrap select {
+  display: block; appearance: none; width: 100%; min-height: 46px;
+  padding: 9px 34px 9px 40px; background: #0d1723; border: 1px solid #3d5868;
+  border-radius: 9px; font-size: .94rem; font-weight: 650;
+}
+.select-wrap select:hover { border-color: var(--accent); }
+.select-wrap .icon { position: absolute; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.filter-icon { left: 12px; color: var(--accent); }
+.select-chevron { right: 12px; color: #a6bdcc; width: 15px; height: 15px; }
+.navigation {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 15px 0; border-bottom: 1px solid var(--edge); margin-bottom: 20px;
+}
+.tabs { display: flex; gap: 6px; }
+.tab {
+  border: 1px solid transparent; background: transparent; color: #afbed0; border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; white-space: nowrap;
+  min-height: 39px; font-size: .88rem; font-weight: 650;
+}
+.tab .icon { width: 17px; height: 17px; }
+.tab:hover { background: #131e2b; color: var(--text); }
+.tab[aria-selected="true"] { border-color: #2b5357; background: #152c35; color: #8df0db; }
+.scope-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .78rem; white-space: nowrap; }
+.scope-label::before { content: ""; flex: none; }
+.view { min-width: 0; }
+.panel, .kpi { border: 1px solid var(--edge); border-radius: 13px; background: var(--panel); min-width: 0; }
+.panel { padding: 21px; }
+.panel-head h2 { font-size: clamp(1.17rem, 2vw, 1.52rem); letter-spacing: -.024em; line-height: 1.24; }
+.panel-head .subtle { margin-top: 5px; }
+.subtle { color: var(--muted); font-size: .86rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 15px; }
+.kpi {
+  --card-ink: var(--accent); --card-tint: #163638;
+  padding: 16px 17px 14px;
+  background: linear-gradient(122deg, #142232 0%, #101a28 69%);
+}
+.kpi-blue { --card-ink: #99c3ff; --card-tint: #1b314c; }
+.kpi-mint { --card-ink: #abdf93; --card-tint: #253d37; }
+.kpi-amber { --card-ink: var(--accent2); --card-tint: #3c302b; }
+.kpi-icon {
+  display: grid; place-items: center; width: 33px; height: 33px; border-radius: 8px;
+  color: var(--card-ink); background: var(--card-tint); margin-bottom: 9px;
+}
+.kpi h2 { font-size: .85rem; font-weight: 620; color: #c2d0df; margin-bottom: 1px; }
+.kpi-value {
+  display: block; color: var(--text); font-size: clamp(1.7rem, 3.0vw, 2.42rem); font-weight: 750;
+  letter-spacing: -.048em; line-height: 1.12; font-variant-numeric: tabular-nums;
+}
+.kpi-caption { margin-top: 6px; color: var(--muted); font-size: .76rem; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1.04fr; gap: 15px; align-items: stretch; }
+.summary-grid .panel { display: flex; flex-direction: column; }
+.borough-chart { margin: 18px -6px 14px; }
+.bar-row {
+  display: grid; grid-template-columns: 93px minmax(0,1fr) 58px; gap: 9px; align-items: center;
+  border: 1px solid transparent; border-radius: 7px; width: 100%; background: transparent;
+  text-align: left; padding: 6px 5px; min-height: 37px; font-size: .84rem;
+}
+.bar-row:hover, .bar-row:focus-visible { background: #142233; border-color: #294256; }
+.bar-row[aria-pressed="true"] { background: #152b35; border-color: #284a54; }
+.bar-row .bar-name { color: #dbe5ef; font-weight: 580; }
+.bar-row.out-of-scope .bar-name { color: #879ab0; }
+.bar-track { display: block; background: #1c2b3d; border-radius: 3px; height: 15px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #287b82, #4bc6b2); }
+.bar-row:first-child .bar-fill, .bar-row[aria-pressed="true"] .bar-fill { background: linear-gradient(90deg, #2da395, #65e6cc); }
+.bar-count { text-align: right; color: #e9f1fb; font-weight: 660; font-variant-numeric: tabular-nums; }
+.bar-row.out-of-scope .bar-count { color: #8397ad; }
+.chart-note {
+  margin-top: auto; border-top: 1px solid #233348; padding-top: 10px;
+  color: var(--muted); font-size: .77rem; line-height: 1.45;
+}
+.property-chart {
+  display: grid; grid-template-columns: minmax(112px, 168px) minmax(0, 1fr); gap: 18px;
+  align-items: center; flex: 1; padding: 13px 0;
+}
+.donut-wrap { position: relative; align-self: center; aspect-ratio: 1; }
+.donut-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.donut-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; pointer-events: none;
+}
+.donut-center strong { font-size: clamp(1.29rem, 2.1vw, 1.9rem); letter-spacing: -.05em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.donut-center span { color: var(--muted); font-size: .72rem; }
+.donut-segment { cursor: pointer; transition: opacity .13s; }
+.donut-segment.dimmed { opacity: .28; }
+.property-legend { min-width: 0; }
+.property-key {
+  display: grid; align-items: start; grid-template-columns: 9px minmax(0,1fr) auto; gap: 8px;
+  min-height: 31px; padding: 5px 5px; width: 100%; background: transparent; text-align: left;
+  border: 1px solid transparent; border-radius: 6px; font-size: .8rem; line-height: 1.23;
+}
+.property-key:hover, .property-key:focus-visible, .property-key[aria-pressed="true"] { border-color: #314b5c; background: #192b39; }
+.property-key .swatch { width: 8px; height: 8px; border-radius: 2px; margin-top: 4px; }
+.property-share { color: #e2ebf5; font-weight: 670; font-variant-numeric: tabular-nums; }
+.property-details { margin-top: 8px; font-size: .77rem; color: var(--muted); }
+.property-details summary { color: #8cdbd0; width: fit-content; }
+.property-details table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.property-details th, .property-details td { padding: 4px 2px; border-bottom: 1px solid #223246; text-align: left; }
+.property-details th:not(:first-child), .property-details td:not(:first-child) { text-align: right; }
+.footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 13px; padding: 17px 0 27px; color: var(--muted); font-size: .78rem; }
+.source-line, .methodology summary { display: flex; align-items: center; gap: 7px; }
+.source-line strong { color: #d8e3ee; font-weight: 610; }
+.source-line .icon, .methodology .icon { width: 15px; height: 15px; }
+.methodology { margin-left: auto; }
+.methodology[open] { flex: 1 1 100%; }
+.methodology summary { list-style: none; justify-content: end; color: #b7c9db; }
+.methodology summary::-webkit-details-marker { display: none; }
+.methodology summary:hover { color: var(--accent); }
+.methodology[open] .method-chevron { transform: rotate(180deg); }
+.methodology-body { margin-top: 9px; padding: 13px 16px; border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
+.methodology-body p + p { margin-top: 7px; }
+.methodology-body strong { color: #d8e3ee; }
+@media (max-width: 1150px) {
+  .shell { width: min(calc(100% - 56px), 1320px); }
+  .panel { padding: 18px; }
+  .property-chart { grid-template-columns: minmax(100px, 132px) minmax(0, 1fr); gap: 12px; }
+}
+@media (max-width: 850px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .property-chart { grid-template-columns: minmax(116px, 176px) minmax(0, 1fr); gap: 20px; }
+}
+@media (max-width: 645px) {
+  .shell { width: calc(100% - 32px); }
+  .masthead-top { min-height: 57px; }
+  .hero { display: grid; gap: 16px; padding: 12px 0 20px; }
+  .borough-control { width: min(100%, 270px); }
+  .navigation { align-items: start; flex-direction: column; gap: 9px; padding: 10px 0; margin-bottom: 13px; }
+  .tabs { flex-wrap: wrap; gap: 4px; }
+  .tab { padding-inline: 7px; gap: 5px; font-size: .78rem; min-height: 35px; }
+  .tab .icon { width: 14px; height: 14px; }
+  .scope-label { padding-left: 3px; }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 10px; }
+  .kpi { padding: 13px; }
+  .kpi h2 { font-size: .79rem; }
+  .summary-grid { gap: 10px; }
+  .panel { padding: 14px; }
+}
+@media (max-width: 410px) {
+  .brand-sub, .brand-divider { display: none; }
+  .property-chart { grid-template-columns: minmax(92px, 108px) minmax(0, 1fr); gap: 8px; }
+  .property-key { font-size: .73rem; gap: 6px; }
+  .bar-row { grid-template-columns: 81px minmax(0, 1fr) 52px; gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; }
+}
+.trend-panel + .trend-panel {
+  margin-top: 18px;
+}
+
+.trend-panel .panel-head {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 7px 15px;
+}
+
+.trend-stats {
+  display: grid;
+  grid-template-columns: .9fr 1fr 1.35fr;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.trend-stats > div {
+  min-width: 0;
+  border: 1px solid var(--edge, #26364a);
+  border-radius: 11px;
+  background: var(--bg, #0a1019);
+  background: color-mix(in srgb, var(--bg, #0a1019) 58%, var(--panel, #101a28));
+  padding: 10px 13px;
+}
+
+.trend-stats dt {
+  color: var(--muted, #9aacbf);
+  font-size: .76rem;
+  font-weight: 550;
+  margin-bottom: 4px;
+}
+
+.trend-stats dd {
+  margin: 0;
+  font-size: clamp(.85rem, 1.6vw, 1.13rem);
+  line-height: 1.4;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#trend-direction,
+#trend-slope {
+  color: var(--accent, #53dec4);
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  color: var(--muted, #9aacbf);
+  font-size: .77rem;
+  margin: 0 0 7px;
+}
+
+.trend-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.trend-legend > [hidden],
+.trend-tooltip[hidden] {
+  display: none;
+}
+
+.trend-key {
+  display: inline-block;
+  width: 19px;
+  border-top: 2px solid var(--accent, #53dec4);
+}
+
+.trend-key-fit {
+  border-top: 2px dashed var(--accent2, #ffbb77);
+}
+
+.trend-key-partial {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--accent, #53dec4);
+  border-radius: 50%;
+}
+
+.trend-plot {
+  height: clamp(250px, 34vw, 365px);
+  position: relative;
+  isolation: isolate;
+  border-radius: 8px;
+  cursor: crosshair;
+}
+
+.trend-plot:focus-visible,
+.trend-heatmap button:focus-visible {
+  outline: 2px solid var(--accent, #53dec4);
+  outline-offset: 3px;
+}
+
+.trend-plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font, system-ui, sans-serif);
+}
+
+.trend-tooltip {
+  position: absolute;
+  top: 0;
+  min-width: 120px;
+  max-width: calc(100% - 8px);
+  width: max-content;
+  border: 1px solid var(--edge, #26364a);
+  border-radius: 8px;
+  background: var(--bg, #0a1019);
+  box-shadow: 0 6px 20px #0007;
+  color: var(--muted, #9aacbf);
+  padding: 8px 10px;
+  font-size: .74rem;
+  line-height: 1.45;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.trend-tooltip strong {
+  display: block;
+  color: var(--text, #f3f7fc);
+  font-size: .8rem;
+  margin-bottom: 2px;
+}
+
+.trend-chart-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin-top: 9px;
+}
+
+.trend-chart-footer > p {
+  margin: 0;
+  font-size: .76rem;
+}
+
+.trend-heat-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--muted, #9aacbf);
+  font-size: .76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-swatches {
+  display: flex;
+  gap: 2px;
+}
+
+.trend-swatches span {
+  width: 15px;
+  height: 10px;
+  border-radius: 2px;
+  outline: 1px solid #ffffff20;
+  outline-offset: -1px;
+}
+
+.trend-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding: 3px;
+}
+
+.trend-mobile-scroll {
+  display: none;
+  margin: 5px 0 0;
+  font-size: .76rem;
+}
+
+.trend-heatmap {
+  width: 100%;
+  min-width: 665px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 4px 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-heatmap th {
+  color: var(--muted, #9aacbf);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.trend-heatmap th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  width: 88px;
+  padding-left: 4px;
+  background: var(--panel, #101a28);
+}
+
+.trend-heatmap thead th {
+  padding: 5px 0 6px;
+}
+
+.trend-heatmap td {
+  padding: 0;
+}
+
+.trend-heatmap button {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 680;
+  cursor: pointer;
+  scroll-margin-left: 92px;
+}
+
+.trend-heatmap button:hover,
+.trend-heatmap button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent2, #ffbb77);
+}
+
+.trend-heatmap button > sup {
+  margin-left: 2px;
+  line-height: 0;
+}
+
+.trend-heat-0 { background: #d8f6f2; color: #112e31; }
+.trend-heat-1 { background: #a6e8de; color: #112e31; }
+.trend-heat-2 { background: #65cdbf; color: #112e31; }
+.trend-heat-3 { background: #3caa9f; color: #072520; }
+.trend-heat-4 { background: #167266; color: #fff; }
+.trend-heat-5 { background: #104b43; color: #fff; }
+.trend-heat-empty {
+  color: var(--muted, #9aacbf);
+  background: repeating-linear-gradient(135deg, #0b1421 0 4px, #142133 4px 8px);
+}
+
+.trend-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .trend-mobile-scroll {
+    display: block;
+  }
+}
+
+@media (max-width: 600px) {
+  .trend-stats {
+    grid-template-columns: 1fr 1fr;
+    margin: 14px 0;
+  }
+
+  .trend-stats > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .trend-heat-legend {
+    margin-bottom: 4px;
+  }
+}
+.rat-map-panel { padding: 22px; }
+.rat-map-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-bottom: 18px; }
+.rat-map-head h2 { margin: 3px 0 4px; }
+.rat-map-head p { margin: 0; }
+.rat-map-modes { display: inline-flex; padding: 4px; gap: 3px; border: 1px solid var(--edge); border-radius: 12px; background: #0b1420; }
+.rat-map-modes button, .rat-map-controls button { font: inherit; color: var(--muted); cursor: pointer; }
+.rat-map-modes button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; white-space: nowrap; background: transparent; border: 1px solid transparent; border-radius: 8px; font-size: .81rem; font-weight: 660; }
+.rat-map-modes button:hover, .rat-map-controls button:hover { color: var(--text); }
+.rat-map-modes button[aria-pressed="true"] { color: var(--accent); background: #18343a; border-color: #285153; }
+.rat-map-modes button[data-rat-map-mode="pin"][aria-pressed="true"] { color: var(--accent2); background: #362923; border-color: #573c2e; }
+.rat-map-modes svg, .rat-map-controls svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.rat-map-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 235px); gap: 16px; align-items: stretch; }
+.rat-map-frame { position: relative; height: clamp(360px, 59vh, 620px); overflow: hidden; border: 1px solid #2d4057; border-radius: 12px; background: radial-gradient(ellipse at 55% 44%, #142940, #091320 80%); }
+.rat-map-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; user-select: none; }
+.rat-map-canvas.is-panning { cursor: grabbing; }
+.rat-map-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.rat-map-borough { fill: #20394c; fill-rule: evenodd; stroke: #547188; stroke-width: .9; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.rat-map-borough.is-active { fill: #284759; stroke: #6f99a9; }
+.rat-map-borough.is-muted { fill: #172937; stroke: #3b5062; }
+.rat-map-label { fill: #afc2d2; font-family: var(--font); font-size: 10px; font-weight: 780; letter-spacing: 1.05px; paint-order: stroke; stroke: #122231; stroke-width: 3px; stroke-linejoin: round; text-anchor: middle; pointer-events: none; }
+.rat-map-label.is-muted { fill: #7e95aa; }
+.rat-map-water { fill: #627e98; font-size: 9px; font-weight: 550; font-style: italic; letter-spacing: .55px; stroke: #132338; }
+.rat-map-marker { cursor: pointer; outline: none; }
+.rat-map-marker-hit { fill: transparent; }
+.rat-map-marker-zip { stroke: #b2fff2; stroke-width: .75; fill-opacity: .97; }
+.rat-map-marker-pin { fill: #ffbb77; stroke: #522e17; stroke-width: 1.25; }
+.rat-map-marker-ring { fill: none; stroke: transparent; stroke-width: 1.6; pointer-events: none; }
+.rat-map-marker:hover .rat-map-marker-ring, .rat-map-marker:focus-visible .rat-map-marker-ring, .rat-map-marker.is-selected .rat-map-marker-ring { stroke: #f4fffc; }
+.rat-map-marker.is-selected .rat-map-marker-ring { stroke-width: 2; }
+.rat-map-controls { display: grid; position: absolute; top: 12px; left: 12px; overflow: hidden; border: 1px solid #3d5369; border-radius: 9px; background: #101d2b; }
+.rat-map-controls button { display: grid; place-items: center; width: 36px; height: 35px; border: 0; padding: 0; background: transparent; font-size: 1.25rem; line-height: 1; }
+.rat-map-controls button + button { border-top: 1px solid #304359; }
+.rat-map-controls button:hover { background: #1b3044; }
+.rat-map-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.rat-map-controls button:disabled { opacity: .45; cursor: default; }
+.rat-map-north { position: absolute; top: 12px; right: 14px; display: grid; justify-items: center; color: #a6b9cd; font-size: .62rem; font-weight: 800; pointer-events: none; }
+.rat-map-north svg { width: 24px; height: 23px; margin-bottom: -3px; }
+.rat-map-scale { position: absolute; left: 13px; bottom: 12px; display: grid; gap: 2px; color: #becddb; font-size: .64rem; font-weight: 700; text-align: center; pointer-events: none; }
+.rat-map-scale i { display: block; height: 5px; border: solid currentColor; border-width: 0 1px 1px; }
+.rat-map-aside { display: flex; flex-direction: column; gap: 19px; align-self: start; border: 1px solid var(--edge); border-radius: 12px; background: #0d1724; padding: 15px; min-width: 0; }
+.rat-map-aside .eyebrow { display: block; margin: 0 0 9px; }
+.rat-map-legend { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.rat-map-legend li { display: flex; align-items: center; gap: 8px; font-size: .81rem; color: var(--text); font-variant-numeric: tabular-nums; }
+.rat-map-swatch { display: inline-block; flex: none; width: 12px; height: 12px; border: 1px solid #9ddcd1; border-radius: 50%; }
+.rat-map-swatch.is-pin { border: 0; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.rat-map-coverage { margin: 12px 0 0; line-height: 1.48; }
+.rat-map-inspector { border-top: 1px solid var(--edge); padding-top: 14px; }
+.rat-map-inspector select { display: block; width: 100%; border: 1px solid #364a60; border-radius: 8px; padding: 7px 8px; font: inherit; font-size: .77rem; color: var(--text); background: #111f2e; }
+.rat-map-detail { margin-top: 11px; overflow-wrap: anywhere; }
+.rat-map-detail h3 { font-size: .98rem; margin: 0 0 5px; line-height: 1.3; }
+.rat-map-detail p { margin: 0 0 6px; }
+.rat-map-detail p:last-child { margin-bottom: 0; }
+.rat-map-detail dl { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 6px 9px; margin: 10px 0 0; font-size: .78rem; }
+.rat-map-detail dt { color: var(--muted); }
+.rat-map-detail dd { color: var(--text); margin: 0; }
+.rat-map-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px 16px; margin-top: 12px; }
+.rat-map-footer p { margin: 0; }
+.rat-map-footer a { color: var(--muted); text-underline-offset: 2px; }
+.rat-map-footer a:hover { color: var(--text); }
+@media (max-width: 700px) {
+  .rat-map-panel { padding: 15px; }
+  .rat-map-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .rat-map-frame { height: clamp(325px, 49vh, 460px); }
+  .rat-map-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .rat-map-inspector { padding: 0 0 0 11px; border: solid var(--edge); border-width: 0 0 0 1px; }
+}
+@media (max-width: 420px) {
+  .rat-map-marker-zip { r: 3.45px; }
+  .rat-map-marker-zip.is-large { r: 4.3px; }
+  .rat-map-aside { grid-template-columns: minmax(0, 1fr); }
+  .rat-map-inspector { border-width: 1px 0 0; padding: 12px 0 0; }
+}
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#dashboard">Skip to dashboard</a>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-mark" viewBox="0 0 24 24"><path d="M4.2 19c-1.7 0-2.8-.9-2.8-2.1 0-1.4 1.2-2.5 3.5-2.5 1.5-3.4 4.1-5 7.6-4.6l2.7.4a2.6 2.6 0 1 1 4 .8l2.9 2.8c.5.5.3 1.2-.4 1.4l-4.2 1.3c-1.1 1.7-2.8 2.4-5.2 2.4H7.5" /><path d="M18.7 13.3h.1M10.6 16.7l-.7 2.2m5.8-2-.3 2" /></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3.5 4v16h17M7 14l4-4 4 2 5-6m-4 0h4v4"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3.5 6 5.7-2.6 5.6 2.5 5.7-2.5V18l-5.7 2.5-5.6-2.5-5.7 2.5ZM9.2 3.4V18m5.6-12.1v14.6"/></symbol>
+    <symbol id="i-reports" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8.5 8.5h7m-7 3.5h7m-7 3.5h4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 10-7 10s-7-5-7-10a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8 12 2.7 2.7L16 9.5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.1 2"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10m-7 6h4"/><circle cx="8" cy="6" r="1.25" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.25" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11.5v4m0-7h.01"/></symbol>
+  </svg>
+  <header class="masthead">
+    <div class="shell">
+      <div class="masthead-top">
+        <div class="masthead-brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-mark"/></svg></span><span>NYC 311<span class="brand-divider"></span><span class="brand-sub">Service requests</span></span></div>
+        <span class="offline-badge"><span></span> Offline dashboard</span>
+      </div>
+      <div class="hero">
+        <div>
+          <p class="eyebrow hero-kicker">NEW YORK CITY · 2010–2018</p>
+          <h1>NYC rat sightings</h1>
+          <p class="hero-description">Explore where sightings were reported, how cases closed, and how reports changed over time.</p>
+        </div>
+        <div class="borough-control">
+          <label for="borough-filter">Borough filter</label>
+          <div class="select-wrap">
+            <svg class="icon filter-icon" aria-hidden="true"><use href="#i-filter"/></svg>
+            <select id="borough-filter">
+              <option value="">All Boroughs</option>
+              <option>Brooklyn</option>
+              <option>Manhattan</option>
+              <option>Queens</option>
+              <option>Bronx</option>
+              <option>Staten Island</option>
+            </select>
+            <svg class="icon select-chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main id="dashboard" class="shell" tabindex="-1">
+    <div class="navigation">
+      <div class="tabs" role="tablist" aria-label="Dashboard views">
+        <button type="button" class="tab" role="tab" id="tab-summary" aria-controls="view-summary" aria-selected="true"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>Summary</button>
+        <button type="button" class="tab" role="tab" id="tab-trends" aria-controls="view-trends" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-trend"/></svg>Monthly Trends</button>
+        <button type="button" class="tab" role="tab" id="tab-map" aria-controls="view-map" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-map"/></svg>Interactive Map</button>
+      </div>
+      <span id="scope-label" class="scope-label" aria-live="polite"></span>
+    </div>
+    <section id="view-summary" class="view" role="tabpanel" aria-labelledby="tab-summary">
+      <div class="kpi-grid" aria-label="Key metrics">
+        <article class="kpi">
+          <div class="kpi-icon"><svg class="icon" aria-hidden="true"><use href="#i-reports"/></svg></div>
+          <h2>Total sightings</h2>
+          <strong class="kpi-value" id="metric-total"></strong>
+          <p class="kpi-caption" id="metric-total-note"></p>
+        </article>
+        <article class="kpi kpi-blue">
+          <div class="kpi-icon"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg></div>
+          <h2>Most affected borough</h2>
+          <strong class="kpi-value" id="metric-borough"></strong>
+          <p class="kpi-caption" id="metric-borough-note"></p>
+        </article>
+        <article class="kpi kpi-mint">
+          <div class="kpi-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></div>
+          <h2>Cases closed</h2>
+          <strong class="kpi-value" id="metric-closed"></strong>
+          <p class="kpi-caption" id="metric-closed-note"></p>
+        </article>
+        <article class="kpi kpi-amber">
+          <div class="kpi-icon"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg></div>
+          <h2>Average time to resolve</h2>
+          <strong class="kpi-value" id="metric-days"></strong>
+          <p class="kpi-caption" id="metric-days-note"></p>
+        </article>
+      </div>
+      <div class="summary-grid">
+        <section class="panel borough-panel" aria-labelledby="borough-heading">
+          <div class="panel-head">
+            <p class="eyebrow">GEOGRAPHY</p>
+            <h2 id="borough-heading">Sightings by borough</h2>
+            <p class="subtle" id="bar-subtitle">Reported sightings across the five boroughs.</p>
+          </div>
+          <div class="borough-chart" id="borough-chart"></div>
+          <p class="chart-note" id="bar-note"></p>
+        </section>
+        <section class="panel property-panel" aria-labelledby="property-heading">
+          <div class="panel-head">
+            <p class="eyebrow">REPORT LOCATION</p>
+            <h2 id="property-heading">Where sightings happen</h2>
+            <p class="subtle">Share of reports by recorded location type.</p>
+          </div>
+          <div class="property-chart">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 184 184" id="property-donut" aria-hidden="true"></svg>
+              <div class="donut-center"><strong id="donut-value"></strong><span id="donut-label"></span></div>
+            </div>
+            <div id="property-legend" class="property-legend" aria-label="Location types"></div>
+          </div>
+          <p class="chart-note" id="property-note"></p>
+          <details class="property-details" id="property-details" hidden>
+            <summary>See all location types</summary>
+            <div id="property-table"></div>
+          </details>
+        </section>
+      </div>
+    </section>
+    <section id="view-trends" class="view" role="tabpanel" aria-labelledby="tab-trends" hidden>
+<section class="panel trend-panel" aria-labelledby="trend-heading">
+  <div class="panel-head">
+    <div>
+      <p class="eyebrow">Time series</p>
+      <h2 id="trend-heading">Monthly sightings &amp; forecast</h2>
+      <p class="subtle">Reported sightings from 2010 through 2018 and a 12-month linear projection.</p>
+    </div>
+  </div>
+  <dl class="trend-stats" aria-label="Linear trend statistics">
+    <div><dt>Trend direction</dt><dd id="trend-direction">—</dd></div>
+    <div><dt>Monthly slope</dt><dd id="trend-slope">—</dd></div>
+    <div><dt>Forecast window</dt><dd id="trend-forecast-window">—</dd></div>
+  </dl>
+  <div class="trend-legend" aria-label="Line chart legend">
+    <span><i class="trend-key trend-key-observed" aria-hidden="true"></i>Reported sightings</span>
+    <span><i class="trend-key trend-key-fit" aria-hidden="true"></i>Linear fit and forecast</span>
+    <span id="trend-partial-key" hidden><i class="trend-key trend-key-partial" aria-hidden="true"></i>Partial month</span>
+  </div>
+  <div id="trend-plot" class="trend-plot" role="group" tabindex="0" aria-label="Explore monthly sightings and forecast" aria-describedby="trend-chart-help">
+    <svg id="trend-svg" role="img" aria-label="Reported monthly sightings and linear projection"></svg>
+    <div id="trend-tooltip" class="trend-tooltip" aria-hidden="true" hidden></div>
+  </div>
+  <div class="trend-chart-footer">
+    <p id="trend-model-note" class="subtle"></p>
+    <p id="trend-chart-help" class="subtle">Hover, tap, or use the arrow keys to inspect.</p>
+  </div>
+  <p id="trend-chart-announcement" class="trend-sr-only" aria-live="polite"></p>
+</section>
+<section class="panel trend-panel" aria-labelledby="trend-heat-heading">
+  <div class="panel-head">
+    <div>
+      <p class="eyebrow">Seasonality</p>
+      <h2 id="trend-heat-heading">Seasonal heatmap</h2>
+      <p class="subtle">Monthly counts by year. Darker cells indicate more reported sightings.</p>
+    </div>
+    <div id="trend-heat-legend" class="trend-heat-legend" aria-label="Heatmap count scale"></div>
+  </div>
+  <div class="trend-table-wrap">
+    <table id="trend-heatmap" class="trend-heatmap" aria-label="Monthly sightings by year" aria-describedby="trend-heat-note"></table>
+  </div>
+  <p class="subtle trend-mobile-scroll">Scroll sideways to see all years.</p>
+  <div class="trend-chart-footer">
+    <p id="trend-heat-note" class="subtle"></p>
+    <p id="trend-heat-selection" class="subtle" aria-live="polite">Select a cell to inspect a month.</p>
+  </div>
+</section>
+    </section>
+    <section id="view-map" class="view" role="tabpanel" aria-labelledby="tab-map" hidden>
+<article class="panel rat-map-panel" aria-labelledby="rat-map-title">
+  <div class="panel-head rat-map-head">
+    <div>
+      <p class="eyebrow">Geography</p>
+      <h2 id="rat-map-title">Where sightings were reported</h2>
+      <p class="subtle" id="rat-map-scope"></p>
+    </div>
+    <div class="rat-map-modes" role="group" aria-label="Map view">
+      <button type="button" data-rat-map-mode="zip" aria-pressed="true">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7.5" cy="11.5" r="4.5"/><circle cx="13.5" cy="6.5" r="2.5"/></svg>
+        ZIP code view
+      </button>
+      <button type="button" data-rat-map-mode="pin" aria-pressed="false">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 18s6-6 6-10a6 6 0 0 0-12 0c0 4 6 10 6 10Z"/><circle cx="10" cy="8" r="2"/></svg>
+        Sample pins
+      </button>
+    </div>
+  </div>
+  <div class="rat-map-grid">
+    <div class="rat-map-frame">
+      <svg id="rat-map-canvas" class="rat-map-canvas" role="group" tabindex="0" aria-label="Map of New York City" aria-describedby="rat-map-instructions">
+        <defs>
+          <pattern id="rat-map-grid-dots" width="25" height="25" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r=".65" fill="#38516e" opacity=".5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#rat-map-grid-dots)" aria-hidden="true"/>
+        <g id="rat-map-land" aria-hidden="true"></g>
+        <g id="rat-map-points"></g>
+        <g id="rat-map-labels" aria-hidden="true"></g>
+      </svg>
+      <div class="rat-map-controls" role="group" aria-label="Zoom controls">
+        <button type="button" id="rat-map-plus" aria-label="Zoom in" title="Zoom in">+</button>
+        <button type="button" id="rat-map-minus" aria-label="Zoom out" title="Zoom out">−</button>
+        <button type="button" id="rat-map-reset" aria-label="Reset map view" title="Reset map view">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4m0 6v4h-4m-6 0H3v-4"/><circle cx="10" cy="10" r="2"/></svg>
+        </button>
+      </div>
+      <div class="rat-map-north" aria-hidden="true">
+        <svg viewBox="0 0 20 24"><path d="m10 2 5 13-5-3-5 3z" fill="currentColor"/></svg>
+        <span>N</span>
+      </div>
+      <div class="rat-map-scale" aria-hidden="true"><span id="rat-map-scale-label"></span><i id="rat-map-scale-bar"></i></div>
+    </div>
+    <aside class="rat-map-aside" aria-label="Map legend and marker details">
+      <div>
+        <p class="eyebrow" id="rat-map-legend-title">Sightings per ZIP code</p>
+        <ul class="rat-map-legend" id="rat-map-legend"></ul>
+        <p class="subtle rat-map-coverage" id="rat-map-coverage"></p>
+      </div>
+      <div class="rat-map-inspector">
+        <label class="eyebrow" for="rat-map-picker">Find a marker</label>
+        <select id="rat-map-picker" aria-label="Find a map marker"></select>
+        <div class="rat-map-detail" id="rat-map-detail" aria-live="polite"></div>
+      </div>
+    </aside>
+  </div>
+  <div class="rat-map-footer">
+    <p class="subtle" id="rat-map-instructions">Drag or use the arrow keys to pan. Scroll, pinch, or use + and − to zoom.</p>
+    <p class="subtle">Borough boundaries from <a href="https://github.com/nycehs/NYC_geography" target="_blank" rel="noopener noreferrer">NYC Environmental Health</a></p>
+  </div>
+</article>
+    </section>
+    <noscript><p>This dashboard needs JavaScript enabled in your browser.</p></noscript>
+    <footer class="footer">
+      <div class="source-line"><svg class="icon" aria-hidden="true"><use href="#i-reports"/></svg><span>Source <strong>Rat_Sightings.xlsx</strong><span id="coverage-label"></span></span></div>
+      <details class="methodology">
+        <summary><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>About the data <svg class="icon method-chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+        <div class="methodology-body" id="methodology-body"></div>
+      </details>
+    </footer>
+  </main>
+  <script type="application/json" id="workbook-data">{"metadata":{"source":"Rat_Sightings.xlsx","sheet":"Rat_Sightings","rows":114507,"startDate":"2010-01-01","endDate":"2018-06-25","firstMonth":0,"lastMonth":101,"partialMonths":["2018-06"],"resolutionExclusions":173,"missingZip":378,"malformedZip":25,"missingCoords":794,"samplePerBorough":50},"boroughs":{"Brooklyn":{"total":39487,"closed":30025,"resolvedCount":29939,"resolutionDays":458214,"statuses":{"Closed":30025,"Pending":7646,"Assigned":1815,"Open":1},"properties":{"3+ Family Apt. Building":15666,"Commercial Building":1839,"Public Garden":119,"Vacant Building":852,"Other (Explain Below)":5848,"1-2 Family Dwelling":8048,"Catch Basin/Sewer":251,"3+ Family Mixed Use Building":2610,"1-2 Family Mixed Use Building":806,"Vacant Lot":1684,"Construction Site":1095,"Parking Lot/Garage":323,"School/Pre-School":68,"Government Building":77,"Office Building":31,"Public Stairs":24,"Single Room Occupancy (SRO)":51,"Day Care/Nursery":54,"Hospital":39,"Summer Camp":2},"monthly":[167,129,279,289,370,371,389,422,365,267,211,140,162,186,298,349,433,465,364,386,362,299,192,175,225,187,268,269,381,366,425,441,349,298,181,210,240,190,256,297,334,370,381,356,300,270,165,141,147,173,193,305,386,442,504,475,427,440,247,229,226,202,321,436,542,630,609,539,539,504,369,346,292,298,399,457,678,681,628,675,591,544,401,335,383,492,490,703,718,770,853,773,641,666,446,318,359,390,412,580,719,594,null,null,null,null,null,null],"zips":{"10458":[1,null,null],"11201":[745,40.693139,-73.990251],"11202":[1,null,null],"11203":[1187,40.652389,-73.935202],"11204":[324,40.618331,-73.984645],"11205":[1122,40.692915,-73.961511],"11206":[1673,40.699186,-73.941997],"11207":[1937,40.674342,-73.897367],"11208":[1101,40.675502,-73.874841],"11209":[281,40.625274,-74.028586],"11210":[435,40.631333,-73.945872],"11211":[1540,40.71288,-73.95196],"11212":[1185,40.662994,-73.916034],"11213":[1588,40.670538,-73.936377],"11214":[567,40.601014,-73.999338],"11215":[1588,40.66818,-73.983734],"11216":[2826,40.68004,-73.950616],"11217":[1596,40.681907,-73.977539],"11218":[463,40.642973,-73.976685],"11219":[456,40.632079,-73.997146],"11220":[465,40.641161,-74.014248],"11221":[3424,40.691177,-73.92705],"11222":[1093,40.726898,-73.949145],"11223":[452,40.599715,-73.973568],"11224":[311,40.576925,-73.986537],"11225":[1219,40.664958,-73.954696],"11226":[1569,40.647939,-73.956318],"11228":[195,40.619179,-74.013111],"11229":[303,40.600507,-73.945115],"11230":[473,40.622423,-73.966718],"11231":[556,40.68131,-73.998152],"11232":[207,40.6567,-74.000666],"11233":[2163,40.678771,-73.919419],"11234":[513,40.622489,-73.92269],"11235":[692,40.582342,-73.957217],"11236":[640,40.64161,-73.905082],"11237":[1508,40.70075,-73.917896],"11238":[2570,40.679629,-73.963628],"11239":[9,40.64971,-73.877139],"11242":[1,40.693244,-73.99066],"11249":[377,40.712911,-73.963025],"11385":[1,40.710531,-73.920747],"11416":[2,40.680384,-73.863617],"11426":[1,null,null]},"zipGeocoded":{"10458":0,"11201":744,"11202":0,"11203":1185,"11204":323,"11205":1119,"11206":1660,"11207":1933,"11208":1100,"11209":281,"11210":434,"11211":1535,"11212":1180,"11213":1574,"11214":566,"11215":1584,"11216":2816,"11217":1593,"11218":461,"11219":456,"11220":465,"11221":3410,"11222":1093,"11223":452,"11224":311,"11225":1213,"11226":1568,"11228":194,"11229":303,"11230":473,"11231":556,"11232":207,"11233":2154,"11234":513,"11235":691,"11236":640,"11237":1507,"11238":2568,"11239":9,"11242":1,"11249":375,"11385":1,"11416":2,"11426":0},"missingZip":126,"malformedZip":1,"missingCoords":230,"pins":[{"id":"16399436","borough":"Brooklyn","address":"1840 52 STREET","zip":"11204","lat":40.625938,"lon":-73.981624,"created":"2010-04-08","closed":null,"status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"16730307","borough":"Brooklyn","address":"CEDAR STREET \u0026 EVERGREEN AVENUE","zip":"11221","lat":40.696667,"lon":-73.928232,"created":"2010-05-25","closed":null,"status":"Pending","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"18283416","borough":"Brooklyn","address":"162 HICKS STREET","zip":"11201","lat":40.696829,"lon":-73.995124,"created":"2010-07-17","closed":"2010-08-04","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"18584127","borough":"Brooklyn","address":"155 SOUTH 4 STREET","zip":"11211","lat":40.71157,"lon":-73.961999,"created":"2010-08-30","closed":"2010-09-24","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"19271633","borough":"Brooklyn","address":"PITKIN AVENUE","zip":"11208","lat":40.674188,"lon":-73.880345,"created":"2010-12-06","closed":"2010-12-13","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"20286408","borough":"Brooklyn","address":"1056 GREENE AVENUE","zip":"11221","lat":40.691307,"lon":-73.925821,"created":"2011-04-22","closed":"2011-05-17","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"20775290","borough":"Brooklyn","address":"817 ST JOHNS PLACE","zip":"11216","lat":40.671687,"lon":-73.95111,"created":"2011-07-07","closed":"2011-06-15","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"21055303","borough":"Brooklyn","address":"2024 HARING STREET","zip":"11229","lat":40.601968,"lon":-73.941175,"created":"2011-08-17","closed":"2011-08-23","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"21732993","borough":"Brooklyn","address":"1657 EAST 19 STREET","zip":"11229","lat":40.609547,"lon":-73.954548,"created":"2011-10-25","closed":"2011-10-26","status":"Closed","property":"1-2 Family Mixed Use Building","detail":"Rat Sighting"},{"id":"22594186","borough":"Brooklyn","address":"47 PUTNAM AVENUE","zip":"11238","lat":40.682859,"lon":-73.960289,"created":"2012-01-25","closed":"2011-12-16","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"23442123","borough":"Brooklyn","address":"266 ELDERT STREET","zip":"11207","lat":40.691824,"lon":-73.908047,"created":"2012-06-18","closed":"2012-06-13","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"23782682","borough":"Brooklyn","address":"145 EAST 91 STREET","zip":"11212","lat":40.660819,"lon":-73.927567,"created":"2012-08-10","closed":"2012-08-15","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"24017648","borough":"Brooklyn","address":"1161 WILLMOHR STREET","zip":"11212","lat":40.658226,"lon":-73.915867,"created":"2012-09-13","closed":"2012-10-05","status":"Closed","property":"1-2 Family Mixed Use Building","detail":"Rat Sighting"},{"id":"24323223","borough":"Brooklyn","address":"1058 EAST 82 STREET","zip":"11236","lat":40.633891,"lon":-73.908937,"created":"2012-11-03","closed":"2012-11-14","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"25096792","borough":"Brooklyn","address":"HANCOCK STREET","zip":"11221","lat":40.691618,"lon":-73.911779,"created":"2013-03-01","closed":"2013-03-15","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"25582432","borough":"Brooklyn","address":"1024 MONTGOMERY STREET","zip":"11213","lat":40.664271,"lon":-73.930595,"created":"2013-05-21","closed":"2013-05-06","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"26217920","borough":"Brooklyn","address":"1069 BERGAN STREET","zip":"11216","lat":40.676156,"lon":-73.95089,"created":"2013-08-29","closed":"2013-09-06","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"27097643","borough":"Brooklyn","address":"720 BELMONT AVENUE","zip":"11208","lat":40.672448,"lon":-73.883196,"created":"2014-01-08","closed":"2014-01-13","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"27496944","borough":"Brooklyn","address":"1405 BROOKLYN AVENUE","zip":"11210","lat":40.638617,"lon":-73.942454,"created":"2014-02-23","closed":"2014-04-14","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28397153","borough":"Brooklyn","address":"682 RALPH AVENUE","zip":"11212","lat":40.666072,"lon":-73.922508,"created":"2014-07-03","closed":"2014-07-15","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28720754","borough":"Brooklyn","address":"679 JEFFERSON AVENUE","zip":"11221","lat":40.685481,"lon":-73.930998,"created":"2014-08-20","closed":"2014-09-15","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"29008535","borough":"Brooklyn","address":"296 HARMAN STREET","zip":"11237","lat":40.699976,"lon":-73.91879,"created":"2014-10-04","closed":"2014-08-05","status":"Pending","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"29686715","borough":"Brooklyn","address":"3051 OCEAN AVENUE","zip":"11235","lat":40.586881,"lon":-73.949026,"created":"2015-01-10","closed":"2015-01-14","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"30047177","borough":"Brooklyn","address":"1511 EMMONS AVENUE","zip":"11235","lat":40.583199,"lon":-73.953234,"created":"2015-02-26","closed":"2015-02-04","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"30705793","borough":"Brooklyn","address":"883A GREENE AVENUE","zip":"11221","lat":40.69079,"lon":-73.932295,"created":"2015-05-27","closed":"2015-06-10","status":"Closed","property":"Vacant Building","detail":"Rat Sighting"},{"id":"31031941","borough":"Brooklyn","address":"190 LENNOX ROAD","zip":"11226","lat":40.653924,"lon":-73.953567,"created":"2015-07-08","closed":"2015-07-15","status":"Closed","property":"Construction Site","detail":"Rat Sighting"},{"id":"31192289","borough":"Brooklyn","address":"49 VERONICA PLACE","zip":"11226","lat":40.649296,"lon":-73.952849,"created":"2015-07-29","closed":"2015-08-05","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"31382352","borough":"Brooklyn","address":"104-148 MASPETH AVENUE","zip":"11211","lat":40.716336,"lon":-73.937994,"created":"2015-08-24","closed":"2015-09-11","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"31856562","borough":"Brooklyn","address":"1138 BLAKE AVENUE","zip":"11208","lat":40.670434,"lon":-73.875618,"created":"2015-10-23","closed":"2015-11-12","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"32301413","borough":"Brooklyn","address":"261 ELDERT STREET","zip":"11207","lat":40.691764,"lon":-73.908133,"created":"2015-12-30","closed":"2016-02-18","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"32743263","borough":"Brooklyn","address":"3 AVENUE \u0026 20 STREET","zip":"11232","lat":40.664537,"lon":-73.997073,"created":"2016-02-22","closed":"2016-03-11","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"33240020","borough":"Brooklyn","address":"769 MONROE STREET","zip":"11221","lat":40.688335,"lon":-73.925731,"created":"2016-04-29","closed":"2016-05-05","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"33456500","borough":"Brooklyn","address":"STATE STREET","zip":"11217","lat":40.687141,"lon":-73.983316,"created":"2016-05-27","closed":"2016-06-20","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"34039749","borough":"Brooklyn","address":"185 HULL STREET","zip":"11233","lat":40.679704,"lon":-73.909513,"created":"2016-08-08","closed":"2016-08-12","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"34283314","borough":"Brooklyn","address":"MONROE STREET","zip":"11216","lat":40.685255,"lon":-73.95242,"created":"2016-09-09","closed":null,"status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"34456030","borough":"Brooklyn","address":"95 EASTERN PARKWAY","zip":"11238","lat":40.672615,"lon":-73.965785,"created":"2016-10-04","closed":"2016-08-02","status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"34741596","borough":"Brooklyn","address":"1329 PACIFIC STREET","zip":"11216","lat":40.677579,"lon":-73.948276,"created":"2016-11-09","closed":"2016-11-09","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"35396438","borough":"Brooklyn","address":"MALCOLM X BOULEVARD \u0026 HALSEY STREET","zip":"11233","lat":40.684168,"lon":-73.929309,"created":"2017-02-02","closed":"2017-02-08","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"35764804","borough":"Brooklyn","address":"295 AVENUE O","zip":"11230","lat":40.611636,"lon":-73.973214,"created":"2017-03-22","closed":"2017-03-30","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"36155259","borough":"Brooklyn","address":"735 LAFAYETTE AVENUE","zip":"11221","lat":40.690963,"lon":-73.943819,"created":"2017-05-10","closed":"2017-05-19","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"36425175","borough":"Brooklyn","address":"DEAN STREET \u0026 5 AVENUE","zip":"11217","lat":40.682117,"lon":-73.976597,"created":"2017-06-12","closed":"2017-06-28","status":"Closed","property":"Parking Lot/Garage","detail":"Rat Sighting"},{"id":"36547822","borough":"Brooklyn","address":"812 PROSPECT PLACE","zip":"11216","lat":40.674269,"lon":-73.949428,"created":"2017-06-26","closed":"2017-07-18","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"36918510","borough":"Brooklyn","address":"2823 FULTON STREET","zip":"11207","lat":40.678236,"lon":-73.890356,"created":"2017-08-10","closed":"2017-08-15","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"37192806","borough":"Brooklyn","address":"1289 OCEAN PKWY","zip":"11230","lat":40.617426,"lon":-73.968555,"created":"2017-09-15","closed":"2017-09-19","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"37455052","borough":"Brooklyn","address":"1082 EAST    4 STREET","zip":"11230","lat":40.624929,"lon":-73.972971,"created":"2017-10-17","closed":"2017-10-26","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"37971112","borough":"Brooklyn","address":"157 PULASKI STREET","zip":"11206","lat":40.692893,"lon":-73.944741,"created":"2017-12-19","closed":null,"status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"38097974","borough":"Brooklyn","address":"884 LORIMER STREET","zip":"11222","lat":40.723015,"lon":-73.951206,"created":"2018-01-03","closed":null,"status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"38721044","borough":"Brooklyn","address":"6902 RIDGE BOULEVARD","zip":"11209","lat":40.636407,"lon":-74.029076,"created":"2018-03-17","closed":"2018-03-15","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"39154526","borough":"Brooklyn","address":"177 EAST   51 STREET","zip":"11203","lat":40.657813,"lon":-73.930007,"created":"2018-05-10","closed":"2018-05-17","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"39463686","borough":"Brooklyn","address":"ATLANTIC AVENUE \u0026 SOUTH OXFORD STREET","zip":"11217","lat":40.682852,"lon":-73.972786,"created":"2018-06-14","closed":null,"status":"Assigned","property":"Other (Explain Below)","detail":"Rat Sighting"}]},"Manhattan":{"total":29837,"closed":19671,"resolvedCount":19647,"resolutionDays":298967,"statuses":{"Closed":19671,"Pending":8844,"Assigned":1322},"properties":{"Other (Explain Below)":5772,"3+ Family Apt. Building":14317,"3+ Family Mixed Use Building":3361,"Construction Site":1071,"Commercial Building":1701,"1-2 Family Mixed Use Building":244,"1-2 Family Dwelling":803,"Vacant Lot":573,"Catch Basin/Sewer":535,"Vacant Building":425,"Public Garden":351,"Government Building":151,"Parking Lot/Garage":213,"School/Pre-School":79,"Single Room Occupancy (SRO)":93,"Day Care/Nursery":36,"Public Stairs":52,"Hospital":23,"Office Building":31,"Summer Camp":2,"Unspecified":4},"monthly":[137,120,260,242,279,300,362,356,267,244,205,95,126,140,193,258,255,271,213,258,273,172,158,144,212,162,202,216,303,272,281,312,253,264,191,189,209,193,239,281,313,332,334,273,270,242,181,151,157,145,244,288,346,386,346,332,349,456,263,229,211,153,267,344,434,333,446,398,466,451,329,291,297,344,357,380,471,462,441,422,493,376,306,261,306,361,342,363,417,376,492,481,402,462,287,218,230,253,268,343,426,333,null,null,null,null,null,null],"zips":{"10000":[3,40.782295,-73.965149],"10001":[459,40.749108,-73.994319],"10002":[1477,40.716528,-73.987685],"10003":[711,40.729433,-73.988061],"10004":[43,40.703623,-74.012284],"10005":[25,40.706074,-74.008592],"10006":[108,40.707604,-74.01334],"10007":[278,40.714397,-74.006944],"10009":[1276,40.725239,-73.98062],"10010":[376,40.739602,-73.983248],"10011":[671,40.741729,-73.999292],"10012":[582,40.725372,-73.998673],"10013":[719,40.719683,-74.003887],"10014":[651,40.733607,-74.004234],"10016":[458,40.744518,-73.979238],"10017":[86,40.752171,-73.971913],"10018":[150,40.754877,-73.992549],"10019":[480,40.764787,-73.986249],"10020":[2,40.758487,-73.979999],"10021":[381,40.769502,-73.95783],"10022":[393,40.758181,-73.96635],"10023":[852,40.777479,-73.980894],"10024":[1428,40.786917,-73.975835],"10025":[2668,40.798025,-73.967431],"10026":[1371,40.802846,-73.953132],"10027":[1540,40.810548,-73.951186],"10028":[701,40.775627,-73.952311],"10029":[1234,40.792764,-73.944824],"10030":[857,40.817936,-73.942665],"10031":[1617,40.826057,-73.948409],"10032":[1145,40.837445,-73.941273],"10033":[1063,40.849387,-73.936217],"10034":[831,40.865853,-73.921228],"10035":[836,40.801895,-73.939049],"10036":[568,40.761136,-73.991154],"10037":[275,40.813373,-73.938079],"10038":[374,40.709772,-74.002612],"10039":[347,40.82469,-73.939007],"10040":[688,40.858374,-73.929863],"10044":[10,40.761751,-73.949784],"10048":[1,40.71274,-74.013382],"10065":[276,40.764581,-73.96435],"10069":[31,40.776678,-73.988967],"10075":[257,40.772447,-73.953986],"10111":[1,40.759385,-73.978201],"10112":[1,40.758735,-73.979598],"10118":[1,40.748248,-73.985535],"10120":[1,40.750038,-73.988393],"10121":[1,40.750028,-73.99211],"10128":[1326,40.780688,-73.949781],"10151":[1,40.763326,-73.973695],"10162":[10,40.769974,-73.951186],"10174":[1,40.751642,-73.975374],"10271":[1,40.708022,-74.010215],"10280":[21,40.708974,-74.016571],"10282":[14,40.716845,-74.014794],"10463":[16,40.875449,-73.91039],"11217":[1,null,null]},"zipGeocoded":{"10000":3,"10001":455,"10002":1470,"10003":706,"10004":43,"10005":25,"10006":108,"10007":277,"10009":1259,"10010":370,"10011":667,"10012":581,"10013":719,"10014":650,"10016":453,"10017":86,"10018":150,"10019":478,"10020":2,"10021":380,"10022":389,"10023":843,"10024":1399,"10025":2625,"10026":1351,"10027":1531,"10028":701,"10029":1220,"10030":845,"10031":1616,"10032":1143,"10033":1058,"10034":831,"10035":830,"10036":562,"10037":274,"10038":372,"10039":347,"10040":687,"10044":10,"10048":1,"10065":276,"10069":30,"10075":256,"10111":1,"10112":1,"10118":1,"10120":1,"10121":1,"10128":1313,"10151":1,"10162":10,"10174":1,"10271":1,"10280":21,"10282":14,"10463":16,"11217":0},"missingZip":118,"malformedZip":24,"missingCoords":349,"pins":[{"id":"15703410","borough":"Manhattan","address":"1 EAST 118 STREET","zip":"10035","lat":40.801877,"lon":-73.945261,"created":"2010-01-11","closed":null,"status":"Pending","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"16632901","borough":"Manhattan","address":"310 WEST 87 STREET","zip":"10024","lat":40.789786,"lon":-73.97792,"created":"2010-05-11","closed":null,"status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"18310656","borough":"Manhattan","address":"334 WEST 87 STREET","zip":"10024","lat":40.789967,"lon":-73.97835,"created":"2010-07-21","closed":"2010-07-27","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"18748623","borough":"Manhattan","address":"50 RIVERSIDE DRIVE","zip":"10024","lat":40.783669,"lon":-73.983631,"created":"2010-09-23","closed":null,"status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"19511618","borough":"Manhattan","address":"501 WEST 175 STREET","zip":"10033","lat":40.844342,"lon":-73.933931,"created":"2011-01-02","closed":"2011-01-19","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"19992870","borough":"Manhattan","address":"860 9 AVENUE","zip":"10019","lat":40.767099,"lon":-73.986293,"created":"2011-03-09","closed":"2011-08-05","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"20667106","borough":"Manhattan","address":"403 EAST 77 STREET","zip":"10075","lat":40.770876,"lon":-73.953272,"created":"2011-06-19","closed":"2011-06-27","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"20969848","borough":"Manhattan","address":"450 AUDUBON AVENUE","zip":"10040","lat":40.852846,"lon":-73.929346,"created":"2011-08-04","closed":"2011-08-18","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"22463614","borough":"Manhattan","address":"535 WEST 155 STREET","zip":"10032","lat":40.83203,"lon":-73.944051,"created":"2012-01-05","closed":"2012-01-09","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"22509124","borough":"Manhattan","address":"EAST 125 STREET \u0026 5 AVENUE","zip":"10035","lat":40.806415,"lon":-73.942262,"created":"2012-01-12","closed":"2012-01-31","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"23208721","borough":"Manhattan","address":"19 STANTON STREET","zip":"10002","lat":40.722487,"lon":-73.991969,"created":"2012-05-10","closed":"2012-05-24","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"23485874","borough":"Manhattan","address":"RIVERSIDE DRIVE \u0026 WEST 86 STREET","zip":"10024","lat":40.78994,"lon":-73.980358,"created":"2012-06-24","closed":"2012-06-27","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"24216854","borough":"Manhattan","address":"504 EAST 12 STREET","zip":"10009","lat":40.728905,"lon":-73.980914,"created":"2012-10-16","closed":"2012-12-03","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"24393151","borough":"Manhattan","address":"140 RIVERSIDE DRIVE","zip":"10024","lat":40.790374,"lon":-73.979596,"created":"2012-11-12","closed":"2013-01-02","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"25334286","borough":"Manhattan","address":"323 WEST 75 STREET","zip":"10023","lat":40.781989,"lon":-73.983574,"created":"2013-04-10","closed":"2013-04-22","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"25431747","borough":"Manhattan","address":"4996 BROADWAY","zip":"10034","lat":40.86822,"lon":-73.918241,"created":"2013-04-26","closed":"2013-02-04","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"25896584","borough":"Manhattan","address":"148 WEST 132 STREET","zip":"10027","lat":40.812772,"lon":-73.943648,"created":"2013-07-08","closed":"2013-06-18","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"26404807","borough":"Manhattan","address":"WEST BROADWAY \u0026 SPRING STREET","zip":"10012","lat":40.724551,"lon":-74.001934,"created":"2013-09-30","closed":"2013-11-19","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"26671566","borough":"Manhattan","address":"410 EAST 88 STREET","zip":"10128","lat":40.777966,"lon":-73.947927,"created":"2013-11-12","closed":"2013-11-18","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"27777594","borough":"Manhattan","address":"WEST END AVENUE \u0026 WEST 89 STREET","zip":"10024","lat":40.790815,"lon":-73.97645,"created":"2014-04-03","closed":"2014-04-15","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"28170593","borough":"Manhattan","address":"688 BROADWAY","zip":"10012","lat":40.728072,"lon":-73.994527,"created":"2014-06-02","closed":"2014-06-05","status":"Closed","property":"Construction Site","detail":"Rat Sighting"},{"id":"28452363","borough":"Manhattan","address":"777 WEST END AVENUE","zip":"10025","lat":40.796608,"lon":-73.972605,"created":"2014-07-11","closed":"2014-07-08","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28910714","borough":"Manhattan","address":"295 CENTRAL PARK WEST","zip":"10024","lat":40.787659,"lon":-73.967611,"created":"2014-09-19","closed":"2014-09-25","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"29122921","borough":"Manhattan","address":"279 EAST 44 STREET","zip":"10017","lat":40.751405,"lon":-73.971917,"created":"2014-10-22","closed":"2014-10-17","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"29530538","borough":"Manhattan","address":"417 EAST 72 STREET","zip":"10021","lat":40.767547,"lon":-73.955372,"created":"2014-12-18","closed":"2014-12-18","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"29787476","borough":"Manhattan","address":"50 MACDOUGAL STREET","zip":"10012","lat":40.72734,"lon":-74.002536,"created":"2015-01-24","closed":"2015-01-16","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"30399825","borough":"Manhattan","address":"244 WEST 106TH STREET","zip":"10025","lat":40.800773,"lon":-73.967258,"created":"2015-04-14","closed":"2015-04-14","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"30889843","borough":"Manhattan","address":"710 RIVERSIDE DRIVE","zip":"10031","lat":40.829008,"lon":-73.95033,"created":"2015-06-19","closed":"2015-05-29","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"31300949","borough":"Manhattan","address":"SZOLD PLACE \u0026 EAST 11 STREET","zip":"10009","lat":40.725921,"lon":-73.975784,"created":"2015-08-13","closed":null,"status":"Assigned","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"31587129","borough":"Manhattan","address":"6 ST NICHOLAS PLACE","zip":"10031","lat":40.826962,"lon":-73.942613,"created":"2015-09-21","closed":"2015-09-30","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"31804179","borough":"Manhattan","address":"433 WEST 43RD STREET","zip":"10036","lat":40.759818,"lon":-73.993243,"created":"2015-10-20","closed":"2015-10-28","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"32414766","borough":"Manhattan","address":"EAST  104 STREET \u0026 3 AVENUE","zip":"10029","lat":40.790253,"lon":-73.945635,"created":"2016-01-14","closed":null,"status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"32769926","borough":"Manhattan","address":"551 WEST 204TH STREET","zip":"10034","lat":40.863635,"lon":-73.920716,"created":"2016-02-25","closed":"2016-02-12","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"32916725","borough":"Manhattan","address":"2035 7TH AVENUE","zip":"10027","lat":40.80688,"lon":-73.949736,"created":"2016-03-16","closed":null,"status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"33267549","borough":"Manhattan","address":"202 WEST 102ND STREET","zip":"10025","lat":40.797897,"lon":-73.968148,"created":"2016-05-03","closed":null,"status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"33682894","borough":"Manhattan","address":"72 EAST 127TH STREET","zip":"10035","lat":40.806443,"lon":-73.938943,"created":"2016-06-25","closed":"2016-07-01","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"34172526","borough":"Manhattan","address":"COLUMBUS AVENUE \u0026 WEST 68 STREET","zip":"10023","lat":40.774852,"lon":-73.980659,"created":"2016-08-25","closed":"2016-08-26","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"34418829","borough":"Manhattan","address":"521 EAST 87 STREET","zip":"10128","lat":40.776318,"lon":-73.945935,"created":"2016-09-27","closed":null,"status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"34678350","borough":"Manhattan","address":"2276 2 AVENUE","zip":"10035","lat":40.797522,"lon":-73.937383,"created":"2016-11-01","closed":"2016-09-13","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"35230651","borough":"Manhattan","address":"115 WEST  104 STREET","zip":"10025","lat":40.798239,"lon":-73.964572,"created":"2017-01-12","closed":"2017-01-17","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"35510637","borough":"Manhattan","address":"WEST 103 STREET","zip":"10025","lat":40.796413,"lon":-73.962164,"created":"2017-02-16","closed":"2017-02-16","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"36066219","borough":"Manhattan","address":"338 LEXINGTON AVENUE","zip":"10016","lat":40.749743,"lon":-73.977298,"created":"2017-04-29","closed":"2017-05-02","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"36190593","borough":"Manhattan","address":"419 WEST   44 STREET","zip":"10036","lat":40.760071,"lon":-73.99247,"created":"2017-05-15","closed":"2017-05-22","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"36887203","borough":"Manhattan","address":"65 PARK TERRACE WEST","zip":"10034","lat":40.87126,"lon":-73.917471,"created":"2017-08-07","closed":"2017-08-24","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"36937366","borough":"Manhattan","address":"AVENUE C \u0026 EAST    6 STREET","zip":"10009","lat":40.723506,"lon":-73.979281,"created":"2017-08-13","closed":null,"status":"Assigned","property":"Parking Lot/Garage","detail":"Rat Sighting"},{"id":"37344507","borough":"Manhattan","address":"77 EAST  110 STREET","zip":"10029","lat":40.795836,"lon":-73.946876,"created":"2017-10-03","closed":"2017-10-04","status":"Closed","property":"Public Garden","detail":"Rat Sighting"},{"id":"37632437","borough":"Manhattan","address":"WEST 15 STREET","zip":"10011","lat":40.739842,"lon":-74.000603,"created":"2017-11-07","closed":"2017-11-08","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"38546423","borough":"Manhattan","address":"707 AVENUE OF AMERICAS","zip":"10010","lat":40.74271,"lon":-73.992963,"created":"2018-02-25","closed":"2018-03-15","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"38913461","borough":"Manhattan","address":"200 EAST  110 STREET","zip":"10029","lat":40.793984,"lon":-73.942479,"created":"2018-04-11","closed":"2018-03-01","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"39463685","borough":"Manhattan","address":"410 RIVERSIDE DRIVE","zip":"10025","lat":40.806916,"lon":-73.967103,"created":"2018-06-15","closed":"2018-06-21","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"}]},"Queens":{"total":16645,"closed":13376,"resolvedCount":13345,"resolutionDays":172755,"statuses":{"Closed":13376,"Pending":2507,"Assigned":761,"Draft":1},"properties":{"Other (Explain Below)":2405,"1-2 Family Dwelling":6409,"Catch Basin/Sewer":226,"3+ Family Apt. Building":3631,"3+ Family Mixed Use Building":740,"Government Building":30,"1-2 Family Mixed Use Building":492,"Construction Site":251,"Parking Lot/Garage":192,"Vacant Lot":611,"Commercial Building":1183,"Vacant Building":346,"Public Stairs":13,"Public Garden":51,"Office Building":16,"School/Pre-School":19,"Hospital":11,"Day Care/Nursery":14,"Single Room Occupancy (SRO)":5},"monthly":[73,61,105,159,143,197,210,216,155,115,81,54,50,71,101,124,174,218,170,206,178,137,98,73,83,73,117,116,144,170,173,208,174,114,69,81,78,81,102,156,246,175,214,204,156,120,76,52,63,67,113,128,153,222,223,229,195,170,97,88,86,86,162,162,200,210,292,228,220,198,135,124,123,142,167,162,254,268,248,307,261,211,143,124,181,225,210,228,220,271,383,331,272,234,165,142,125,161,159,185,306,235,null,null,null,null,null,null],"zips":{"11001":[48,40.732957,-73.71004],"11004":[26,40.743564,-73.710669],"11040":[9,40.751242,-73.73119],"11101":[637,40.748591,-73.94021],"11102":[172,40.771348,-73.923868],"11103":[471,40.761865,-73.912957],"11104":[213,40.744462,-73.922686],"11105":[205,40.775657,-73.909416],"11106":[311,40.761653,-73.932731],"11109":[1,40.744303,-73.95765],"11208":[4,40.673659,-73.859784],"11237":[7,40.702884,-73.913321],"11354":[185,40.764683,-73.827479],"11355":[259,40.752987,-73.823871],"11356":[89,40.785699,-73.844691],"11357":[303,40.784556,-73.810556],"11358":[126,40.761835,-73.795923],"11360":[38,40.782799,-73.78536],"11361":[189,40.760418,-73.771438],"11362":[44,40.75848,-73.73399],"11363":[22,40.772728,-73.746632],"11364":[67,40.747515,-73.761],"11365":[94,40.737138,-73.799343],"11366":[47,40.727152,-73.796433],"11367":[134,40.727497,-73.819987],"11368":[581,40.747026,-73.861253],"11369":[179,40.762649,-73.871172],"11370":[206,40.763663,-73.888931],"11372":[505,40.751522,-73.887185],"11373":[580,40.739931,-73.878804],"11374":[325,40.729289,-73.860354],"11375":[271,40.723552,-73.848227],"11377":[934,40.744792,-73.903809],"11378":[464,40.723373,-73.902281],"11379":[414,40.718369,-73.880936],"11385":[1770,40.703759,-73.902006],"11411":[114,40.694983,-73.737712],"11412":[531,40.698234,-73.758489],"11413":[278,40.674403,-73.751286],"11414":[181,40.661532,-73.844561],"11415":[69,40.708286,-73.829027],"11416":[219,40.684713,-73.848819],"11417":[328,40.676051,-73.842347],"11418":[298,40.698503,-73.830623],"11419":[354,40.688485,-73.823705],"11420":[348,40.676432,-73.814371],"11421":[209,40.691203,-73.856535],"11422":[122,40.664068,-73.735259],"11423":[188,40.712622,-73.76969],"11426":[109,40.73512,-73.721],"11427":[76,40.728767,-73.747328],"11428":[71,40.719296,-73.744917],"11429":[224,40.708929,-73.740679],"11430":[12,40.648806,-73.788163],"11432":[487,40.710223,-73.794944],"11433":[656,40.696973,-73.78852],"11434":[501,40.680302,-73.778054],"11435":[549,40.698933,-73.808537],"11436":[256,40.676289,-73.796945],"11691":[250,40.600583,-73.758318],"11692":[84,40.593876,-73.794448],"11693":[69,40.592438,-73.815739],"11694":[79,40.578044,-73.841199],"11697":[1,40.566964,-73.892169]},"zipGeocoded":{"11001":48,"11004":26,"11040":8,"11101":637,"11102":172,"11103":465,"11104":213,"11105":205,"11106":310,"11109":1,"11208":4,"11237":7,"11354":184,"11355":259,"11356":89,"11357":303,"11358":126,"11360":38,"11361":189,"11362":43,"11363":22,"11364":67,"11365":92,"11366":47,"11367":134,"11368":580,"11369":179,"11370":206,"11372":505,"11373":579,"11374":325,"11375":269,"11377":933,"11378":464,"11379":414,"11385":1768,"11411":114,"11412":530,"11413":277,"11414":180,"11415":69,"11416":219,"11417":326,"11418":298,"11419":354,"11420":348,"11421":209,"11422":121,"11423":187,"11426":109,"11427":76,"11428":71,"11429":224,"11430":12,"11432":485,"11433":654,"11434":501,"11435":549,"11436":256,"11691":249,"11692":84,"11693":69,"11694":78,"11697":1},"missingZip":52,"malformedZip":0,"missingCoords":82,"pins":[{"id":"16409238","borough":"Queens","address":"34-61 VERNON BOULEVARD","zip":"11106","lat":40.764332,"lon":-73.941006,"created":"2010-04-09","closed":null,"status":"Pending","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"16728178","borough":"Queens","address":"34-42 72 STREET","zip":"11372","lat":40.751593,"lon":-73.89413,"created":"2010-05-25","closed":null,"status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"18369355","borough":"Queens","address":"79-40 ELKS ROAD","zip":"11373","lat":40.733363,"lon":-73.88586,"created":"2010-07-29","closed":"2010-08-11","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"18629908","borough":"Queens","address":"177-26 BAISLEY BOULEVARD","zip":"11434","lat":40.686728,"lon":-73.767989,"created":"2010-09-06","closed":"2010-10-19","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"19926055","borough":"Queens","address":"108-11 48 AVENUE","zip":"11368","lat":40.74613,"lon":-73.855646,"created":"2011-02-06","closed":"2011-03-14","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"20314750","borough":"Queens","address":"42-15 43 AVENUE","zip":"11104","lat":40.74531,"lon":-73.921824,"created":"2011-04-27","closed":"2011-05-31","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"20705728","borough":"Queens","address":"17-17 TROUTMAN STREET","zip":"11385","lat":40.708996,"lon":-73.920406,"created":"2011-06-25","closed":"2011-07-18","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"21084590","borough":"Queens","address":"249 STREET","zip":"11426","lat":40.736081,"lon":-73.718685,"created":"2011-08-22","closed":"2011-09-14","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"21667961","borough":"Queens","address":"STARR AVENUE \u0026 GREENPOINT AVENUE","zip":"11101","lat":40.734994,"lon":-73.936284,"created":"2011-10-16","closed":"2011-10-18","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"22719857","borough":"Queens","address":"602 SENECA AVENUE","zip":"11385","lat":40.70404,"lon":-73.90979,"created":"2012-02-15","closed":"2012-01-27","status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"23185250","borough":"Queens","address":"179-04 SELOVER ROAD","zip":"11434","lat":40.682949,"lon":-73.764497,"created":"2012-05-07","closed":"2012-05-16","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"23577528","borough":"Queens","address":"129-16 20 AVENUE","zip":"11356","lat":40.781681,"lon":-73.839366,"created":"2012-07-08","closed":"2012-07-16","status":"Closed","property":"1-2 Family Mixed Use Building","detail":"Rat Sighting"},{"id":"23768903","borough":"Queens","address":"65-87 TERRACE COURT","zip":"11379","lat":40.710254,"lon":-73.893943,"created":"2012-08-08","closed":"2012-08-24","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"24223332","borough":"Queens","address":"47-22 30 AVENUE","zip":"11103","lat":40.761144,"lon":-73.909149,"created":"2012-10-18","closed":"2012-12-19","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"25035853","borough":"Queens","address":"168-41 89 AVENUE","zip":"11432","lat":40.709005,"lon":-73.792821,"created":"2013-02-20","closed":"2013-02-22","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"25511436","borough":"Queens","address":"85-14 SUTTER AVENUE","zip":"11417","lat":40.675741,"lon":-73.851349,"created":"2013-05-09","closed":"2013-05-14","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"25969593","borough":"Queens","address":"94-20 109 STREET","zip":"11419","lat":40.691187,"lon":-73.836465,"created":"2013-07-19","closed":"2013-05-14","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"26144863","borough":"Queens","address":"BLEECKER STREET","zip":"11385","lat":40.709974,"lon":-73.906319,"created":"2013-08-16","closed":"2013-08-28","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"26711890","borough":"Queens","address":"65-30 51 ROAD","zip":"11377","lat":40.734325,"lon":-73.899779,"created":"2013-11-18","closed":"2013-11-25","status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"27688474","borough":"Queens","address":"37-42 WARREN STREET","zip":"11372","lat":40.750895,"lon":-73.871462,"created":"2014-03-21","closed":"2014-04-01","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"28007268","borough":"Queens","address":"MYRTLE AVENUE \u0026 67 STREET","zip":"11385","lat":40.701477,"lon":-73.886484,"created":"2014-05-09","closed":"2014-05-22","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"28484387","borough":"Queens","address":"95-23 93 STREET","zip":"11416","lat":40.686459,"lon":-73.848964,"created":"2014-07-16","closed":"2014-07-23","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"28831828","borough":"Queens","address":"191-41 114 DRIVE","zip":"11412","lat":40.696735,"lon":-73.761445,"created":"2014-09-06","closed":"2014-08-07","status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"29071762","borough":"Queens","address":"43-60 DOUGLASTON PARKWAY","zip":"11363","lat":40.766774,"lon":-73.746067,"created":"2014-10-14","closed":"2014-10-17","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"29588947","borough":"Queens","address":"84-60 LITTLENECK PARKWAY","zip":"11001","lat":40.734774,"lon":-73.712863,"created":"2014-12-28","closed":"2014-12-31","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"30183109","borough":"Queens","address":"57-10 84 STREET","zip":"11373","lat":40.730367,"lon":-73.878898,"created":"2015-03-15","closed":"2015-04-09","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"30896969","borough":"Queens","address":"143-16 HOOVER AVENUE","zip":"11435","lat":40.71423,"lon":-73.814845,"created":"2015-06-20","closed":"2015-06-23","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"31213749","borough":"Queens","address":"45-46 BELL BOULEVARD","zip":"11361","lat":40.759084,"lon":-73.768697,"created":"2015-08-01","closed":null,"status":"Pending","property":"Commercial Building","detail":"Rat Sighting"},{"id":"31445016","borough":"Queens","address":"51-29 64 STREET","zip":"11377","lat":40.7352,"lon":-73.901903,"created":"2015-09-02","closed":"2015-10-23","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"31837392","borough":"Queens","address":"152-07 125 AVENUE","zip":"11434","lat":40.675053,"lon":-73.788734,"created":"2015-10-24","closed":"2015-11-13","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"32408750","borough":"Queens","address":"FOCH BOULEVARD","zip":"11434","lat":40.681234,"lon":-73.790253,"created":"2016-01-13","closed":"2016-01-15","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"32566144","borough":"Queens","address":"BROADWAY \u0026 NORTHERN BOULEVARD","zip":"11377","lat":40.753284,"lon":-73.906908,"created":"2016-01-30","closed":"2016-02-02","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"33398727","borough":"Queens","address":"35-50 73RD STREET","zip":"11372","lat":40.74944,"lon":-73.893137,"created":"2016-05-20","closed":"2016-05-24","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"33478190","borough":"Queens","address":"1926 GROVE STREET","zip":"11385","lat":40.706813,"lon":-73.90716,"created":"2016-05-31","closed":"2016-05-06","status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"33842729","borough":"Queens","address":"77 STREET \u0026 SUTTER AVENUE","zip":"11417","lat":40.674587,"lon":-73.859297,"created":"2016-07-14","closed":"2016-08-11","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"34168457","borough":"Queens","address":"46TH STREET","zip":"11103","lat":40.763232,"lon":-73.908916,"created":"2016-08-25","closed":"2016-10-04","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"34503765","borough":"Queens","address":"37-23 72 STREET","zip":"11372","lat":40.748231,"lon":-73.893883,"created":"2016-10-09","closed":"2016-10-28","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"34659489","borough":"Queens","address":"1643 HANCOCK STREET","zip":"11385","lat":40.698122,"lon":-73.905925,"created":"2016-10-29","closed":"2016-11-01","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"35278188","borough":"Queens","address":"110-23 56 AVENUE","zip":"11368","lat":40.741278,"lon":-73.851369,"created":"2017-01-18","closed":"2017-01-20","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"35759324","borough":"Queens","address":"OTIS AVENUE \u0026 108 STREET","zip":"11368","lat":40.741105,"lon":-73.853812,"created":"2017-03-21","closed":"2017-04-05","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"36281110","borough":"Queens","address":"94-05 75 STREET","zip":"11416","lat":40.683478,"lon":-73.864186,"created":"2017-05-25","closed":"2017-06-02","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"36319825","borough":"Queens","address":"25-55 21 STREET","zip":"11102","lat":40.773797,"lon":-73.924675,"created":"2017-05-31","closed":"2017-06-13","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"36719118","borough":"Queens","address":"5-20 51 AVENUE","zip":"11101","lat":40.742411,"lon":-73.956316,"created":"2017-07-17","closed":"2017-08-02","status":"Closed","property":"Construction Site","detail":"Rat Sighting"},{"id":"36914005","borough":"Queens","address":"244-19 137 ROAD","zip":"11422","lat":40.667737,"lon":-73.732826,"created":"2017-08-10","closed":"2017-08-22","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"37246209","borough":"Queens","address":"QUEENS BOULEVARD \u0026 64 STREET","zip":"11377","lat":40.741131,"lon":-73.90158,"created":"2017-09-21","closed":"2017-10-31","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"37366674","borough":"Queens","address":"83-05 DORAN AVE","zip":"11385","lat":40.708921,"lon":-73.865793,"created":"2017-10-06","closed":"2017-10-23","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"38277977","borough":"Queens","address":"35-57 70 STREET","zip":"11372","lat":40.748926,"lon":-73.895506,"created":"2018-01-22","closed":"2018-01-24","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"38473963","borough":"Queens","address":"804 WOODWARD AVE","zip":"11385","lat":40.703356,"lon":-73.903101,"created":"2018-02-15","closed":"2018-02-16","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"39026223","borough":"Queens","address":"73 AVENUE","zip":"11367","lat":40.727189,"lon":-73.812016,"created":"2018-04-26","closed":"2018-05-08","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"39432969","borough":"Queens","address":"34-47 90 STREET","zip":"11372","lat":40.753149,"lon":-73.877341,"created":"2018-06-11","closed":"2018-05-11","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"}]},"Bronx":{"total":23109,"closed":15620,"resolvedCount":15594,"resolutionDays":207086,"statuses":{"Closed":15620,"Pending":6525,"Assigned":964},"properties":{"3+ Family Apt. Building":12724,"Single Room Occupancy (SRO)":34,"1-2 Family Dwelling":3658,"1-2 Family Mixed Use Building":307,"Vacant Lot":625,"Other (Explain Below)":2063,"Vacant Building":274,"Construction Site":109,"Catch Basin/Sewer":140,"3+ Family Mixed Use Building":2023,"Commercial Building":735,"School/Pre-School":28,"Day Care/Nursery":30,"Hospital":10,"Public Stairs":40,"Parking Lot/Garage":193,"Public Garden":47,"Office Building":16,"Government Building":48,"Summer Camp":3,"Unspecified":2},"monthly":[118,107,160,173,180,210,227,236,188,208,127,133,107,145,183,199,203,206,235,215,207,191,119,164,130,137,167,163,250,209,219,216,195,183,116,140,172,141,183,193,195,191,215,199,195,163,120,153,145,139,189,215,264,273,252,288,279,290,234,175,191,148,209,249,267,301,452,312,325,298,229,208,209,241,290,233,329,327,337,346,357,334,242,252,254,379,328,345,303,338,356,326,324,329,233,231,221,218,199,236,346,228,null,null,null,null,null,null],"zips":{"10026":[1,null,null],"10451":[903,40.822848,-73.920511],"10452":[1301,40.836465,-73.922432],"10453":[1419,40.852148,-73.91122],"10454":[624,40.807495,-73.919637],"10455":[905,40.815558,-73.907491],"10456":[1957,40.831097,-73.909148],"10457":[1849,40.847669,-73.899878],"10458":[1747,40.861439,-73.88924],"10459":[1169,40.825408,-73.894654],"10460":[1113,40.840971,-73.879883],"10461":[395,40.847361,-73.840811],"10462":[1135,40.848192,-73.862496],"10463":[892,40.880537,-73.90412],"10464":[53,40.848728,-73.787435],"10465":[377,40.828068,-73.820159],"10466":[638,40.89092,-73.850371],"10467":[2026,40.873653,-73.870751],"10468":[1414,40.866583,-73.899718],"10469":[772,40.870922,-73.850768],"10470":[219,40.90105,-73.859165],"10471":[175,40.9007,-73.901678],"10472":[1086,40.829381,-73.869217],"10473":[398,40.817381,-73.859692],"10474":[405,40.815864,-73.887604],"10475":[82,40.877449,-73.82853]},"zipGeocoded":{"10026":0,"10451":902,"10452":1301,"10453":1418,"10454":618,"10455":903,"10456":1949,"10457":1843,"10458":1745,"10459":1166,"10460":1111,"10461":395,"10462":1135,"10463":891,"10464":53,"10465":377,"10466":637,"10467":2023,"10468":1412,"10469":770,"10470":219,"10471":174,"10472":1086,"10473":395,"10474":403,"10475":80},"missingZip":54,"malformedZip":0,"missingCoords":100,"pins":[{"id":"16019772","borough":"Bronx","address":"ELDER AVENUE","zip":"10472","lat":40.82493,"lon":-73.878325,"created":"2010-02-17","closed":null,"status":"Pending","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"16523487","borough":"Bronx","address":"285 EAST 171 STREET","zip":"10457","lat":40.838859,"lon":-73.910297,"created":"2010-04-26","closed":null,"status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"18570298","borough":"Bronx","address":"1350 SHAKESPEARE AVENUE","zip":"10452","lat":40.840591,"lon":-73.922258,"created":"2010-08-27","closed":"2010-10-18","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"18869966","borough":"Bronx","address":"185 WEST 170 STREET","zip":"10452","lat":40.841933,"lon":-73.925834,"created":"2010-10-11","closed":"2010-11-22","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"19321783","borough":"Bronx","address":"2256 AQUEDUCT AVENUE","zip":"10453","lat":40.859011,"lon":-73.907132,"created":"2010-12-11","closed":"2010-12-13","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"20210741","borough":"Bronx","address":"2819 BARKER AVENUE","zip":"10467","lat":40.866975,"lon":-73.869195,"created":"2011-04-11","closed":"2011-04-28","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"20650909","borough":"Bronx","address":"2324 MORRIS AVENUE","zip":"10468","lat":40.858806,"lon":-73.901475,"created":"2011-06-16","closed":"2011-05-27","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"20851569","borough":"Bronx","address":"3198 CAMBRIDGE AVENUE","zip":"10463","lat":40.883693,"lon":-73.909438,"created":"2011-07-18","closed":"2011-07-25","status":"Closed","property":"Construction Site","detail":"Rat Sighting"},{"id":"21549083","borough":"Bronx","address":"1250 FRANKLIN AVENUE","zip":"10456","lat":40.830871,"lon":-73.90285,"created":"2011-09-29","closed":"2011-10-06","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"22420445","borough":"Bronx","address":"1558 BRYANT AVENUE","zip":"10460","lat":40.833772,"lon":-73.886714,"created":"2011-12-30","closed":"2012-01-05","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"23079680","borough":"Bronx","address":"2603 SEDGEWICK AVENUE","zip":"10468","lat":40.868775,"lon":-73.905763,"created":"2012-04-18","closed":"2012-04-25","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"23368499","borough":"Bronx","address":"945 HUNTINGTON AVENUE","zip":"10465","lat":40.827912,"lon":-73.830709,"created":"2012-06-06","closed":"2012-06-21","status":"Closed","property":"1-2 Family Mixed Use Building","detail":"Rat Sighting"},{"id":"24003669","borough":"Bronx","address":"33 HARPER COURT","zip":"10466","lat":40.884963,"lon":-73.834629,"created":"2012-09-11","closed":"2012-09-20","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"24617017","borough":"Bronx","address":"3535 ROCHAMBEAU AVENUE","zip":"10467","lat":40.882408,"lon":-73.879058,"created":"2012-12-17","closed":"2012-12-20","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"24960440","borough":"Bronx","address":"1061 CLAY AVENUE","zip":"10456","lat":40.828774,"lon":-73.912627,"created":"2013-02-08","closed":"2013-02-12","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"25804146","borough":"Bronx","address":"1150 EAST 225 STREET","zip":"10466","lat":40.88351,"lon":-73.847536,"created":"2013-06-24","closed":"2013-07-02","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"25900633","borough":"Bronx","address":"2120 TIEBOUT AVENUE","zip":"10457","lat":40.853171,"lon":-73.898664,"created":"2013-07-09","closed":"2013-05-20","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"26605524","borough":"Bronx","address":"2922 GRAND CONCOURS","zip":"10458","lat":40.871519,"lon":-73.888627,"created":"2013-11-01","closed":"2013-09-30","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"26818912","borough":"Bronx","address":"2380 RYER AVENUE","zip":"10458","lat":40.859415,"lon":-73.898029,"created":"2013-12-05","closed":"2013-12-06","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"27792022","borough":"Bronx","address":"770 BRYANT AVENUE","zip":"10474","lat":40.816762,"lon":-73.885836,"created":"2014-04-05","closed":"2014-03-03","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28259091","borough":"Bronx","address":"2199 CRUGER AVENUE","zip":"10462","lat":40.856317,"lon":-73.866649,"created":"2014-06-14","closed":"2014-05-30","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28603989","borough":"Bronx","address":"1316 WESTFARMS ROAD","zip":"10459","lat":40.829595,"lon":-73.887169,"created":"2014-08-02","closed":null,"status":"Assigned","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28952693","borough":"Bronx","address":"1011 SHERIDAN AVENUE","zip":"10456","lat":40.829413,"lon":-73.919488,"created":"2014-09-25","closed":"2014-10-07","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"29345987","borough":"Bronx","address":"997 SUMMIT AVENUE","zip":"10452","lat":40.833002,"lon":-73.930329,"created":"2014-11-21","closed":"2014-12-08","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"29492090","borough":"Bronx","address":"2350 BEAUMONT AVENUE","zip":"10458","lat":40.853087,"lon":-73.884986,"created":"2014-12-13","closed":"2014-12-17","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"30462995","borough":"Bronx","address":"1376 OGDEN AVENUE","zip":"10452","lat":40.841998,"lon":-73.924468,"created":"2015-04-23","closed":"2015-04-28","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"30717303","borough":"Bronx","address":"335E EAST 148TH STREET","zip":"10451","lat":40.816107,"lon":-73.920556,"created":"2015-05-28","closed":"2015-05-05","status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"31028815","borough":"Bronx","address":"65 WEST  192 STREET","zip":"10468","lat":40.866694,"lon":-73.901359,"created":"2015-07-08","closed":null,"status":"Assigned","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"31328487","borough":"Bronx","address":"891 CAULDWELL AVENUE","zip":"10456","lat":40.822528,"lon":-73.907194,"created":"2015-08-17","closed":"2015-08-24","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"31600753","borough":"Bronx","address":"808 EAST  170 STREET","zip":"10459","lat":40.833154,"lon":-73.895442,"created":"2015-09-23","closed":"2015-09-16","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"32025511","borough":"Bronx","address":"1894 ARTHUR AVENUE","zip":"10457","lat":40.845177,"lon":-73.893649,"created":"2015-11-19","closed":null,"status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"32369674","borough":"Bronx","address":"2250 GRAND CONCOURSE","zip":"10457","lat":40.856598,"lon":-73.900434,"created":"2016-01-08","closed":"2015-11-30","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"32856337","borough":"Bronx","address":"3067 DECATUR AVENUE","zip":"10467","lat":40.871072,"lon":-73.878916,"created":"2016-03-08","closed":"2016-03-14","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"33281520","borough":"Bronx","address":"620 EAST  188 STREET","zip":"10458","lat":40.856019,"lon":-73.885986,"created":"2016-05-05","closed":"2016-05-13","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"33657061","borough":"Bronx","address":"1758 ANTHONY AVENUE","zip":"10457","lat":40.845345,"lon":-73.903888,"created":"2016-06-21","closed":"2016-07-06","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"33859606","borough":"Bronx","address":"2007 NEWBOLD AVENUE","zip":"10462","lat":40.832643,"lon":-73.856784,"created":"2016-07-17","closed":"2016-07-29","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"34353927","borough":"Bronx","address":"3915 CARPENTER AVENUE","zip":"10466","lat":40.88706,"lon":-73.864265,"created":"2016-09-19","closed":"2016-09-23","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"34494807","borough":"Bronx","address":"1325 LAFAYETTE AVENUE","zip":"10474","lat":40.816995,"lon":-73.885792,"created":"2016-10-08","closed":null,"status":"Assigned","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"34867709","borough":"Bronx","address":"1532 ROSEDALE AVENUE","zip":"10460","lat":40.838456,"lon":-73.870053,"created":"2016-11-26","closed":"2016-10-20","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"35500243","borough":"Bronx","address":"703 EAST  183 STREET","zip":"10458","lat":40.851957,"lon":-73.885371,"created":"2017-02-15","closed":"2017-03-02","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"35644133","borough":"Bronx","address":"1868 MATTHEWS AVENUE","zip":"10462","lat":40.848031,"lon":-73.862379,"created":"2017-03-07","closed":"2017-03-13","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"36191334","borough":"Bronx","address":"636 EAST 239 STREET","zip":"10470","lat":40.900921,"lon":-73.855053,"created":"2017-05-15","closed":"2017-05-02","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"36423100","borough":"Bronx","address":"512 REYNOLDS AVENUE","zip":"10465","lat":40.821794,"lon":-73.809588,"created":"2017-06-12","closed":null,"status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"36802390","borough":"Bronx","address":"3055 HULL AVENUE","zip":"10467","lat":40.871702,"lon":-73.879483,"created":"2017-07-27","closed":"2017-08-17","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"37036613","borough":"Bronx","address":"1210 NELSON AVENUE","zip":"10452","lat":40.837755,"lon":-73.925322,"created":"2017-08-26","closed":"2017-09-26","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"37378519","borough":"Bronx","address":"206 MOUNT HOPE PLACE","zip":"10457","lat":40.848294,"lon":-73.905568,"created":"2017-10-08","closed":"2017-11-01","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"37726322","borough":"Bronx","address":"2412 WEBSTER AVENUE","zip":"10458","lat":40.85918,"lon":-73.89367,"created":"2017-11-17","closed":"2017-11-14","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"38240428","borough":"Bronx","address":"1229 FRANKLIN AVENUE","zip":"10456","lat":40.830559,"lon":-73.903241,"created":"2018-01-18","closed":"2018-01-23","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"39162241","borough":"Bronx","address":"352 E 134TH ST","zip":"10454","lat":40.806815,"lon":-73.926332,"created":"2018-05-10","closed":"2018-05-24","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"39495869","borough":"Bronx","address":"336 EAST  166 STREET","zip":"10456","lat":40.829787,"lon":-73.913417,"created":"2018-06-18","closed":"2018-06-04","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"}]},"Staten Island":{"total":5425,"closed":4400,"resolvedCount":4394,"resolutionDays":87036,"statuses":{"Closed":4400,"Pending":772,"Assigned":253},"properties":{"1-2 Family Dwelling":2975,"Commercial Building":282,"Other (Explain Below)":743,"3+ Family Apt. Building":367,"3+ Family Mixed Use Building":82,"Vacant Building":177,"1-2 Family Mixed Use Building":108,"Parking Lot/Garage":74,"Vacant Lot":469,"Catch Basin/Sewer":27,"Construction Site":87,"Office Building":3,"Government Building":6,"Public Garden":5,"Hospital":7,"School/Pre-School":5,"Single Room Occupancy (SRO)":2,"Day Care/Nursery":6},"monthly":[33,8,27,49,94,83,101,91,65,41,27,13,14,21,50,47,61,90,59,66,64,36,28,12,19,30,37,34,64,59,79,92,53,40,11,20,30,35,58,74,71,69,73,73,60,60,27,11,9,17,43,54,87,88,72,91,54,61,15,26,14,19,43,56,54,76,94,73,63,50,27,25,23,19,48,52,81,102,115,104,73,59,29,29,34,37,36,49,81,127,115,100,72,65,38,30,30,36,49,50,92,80,null,null,null,null,null,null],"zips":{"10301":[433,40.634619,-74.089296],"10302":[331,40.6306,-74.136175],"10303":[399,40.630885,-74.157199],"10304":[485,40.61544,-74.085765],"10305":[458,40.597476,-74.07541],"10306":[751,40.567345,-74.113489],"10307":[134,40.509943,-74.240965],"10308":[298,40.554141,-74.15027],"10309":[284,40.533803,-74.211754],"10310":[394,40.631593,-74.120973],"10312":[602,40.548923,-74.180323],"10314":[831,40.606526,-74.144784],"10461":[1,null,null]},"zipGeocoded":{"10301":433,"10302":331,"10303":397,"10304":484,"10305":458,"10306":750,"10307":134,"10308":298,"10309":284,"10310":393,"10312":602,"10314":831,"10461":0},"missingZip":24,"malformedZip":0,"missingCoords":29,"pins":[{"id":"16538583","borough":"Staten Island","address":"1072 VICTORY BOULEVARD","zip":"10301","lat":40.618633,"lon":-74.100789,"created":"2010-04-28","closed":null,"status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"16721254","borough":"Staten Island","address":"82 DELAWARE AVENUE","zip":"10304","lat":40.592643,"lon":-74.096829,"created":"2010-05-24","closed":null,"status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"16933258","borough":"Staten Island","address":"822 DRUMGOOLE ROAD EAST","zip":"10312","lat":40.542268,"lon":-74.1841,"created":"2010-06-24","closed":null,"status":"Pending","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"18352452","borough":"Staten Island","address":"SUMNER AVENUE \u0026 WILLOW ROAD WEST","zip":"10314","lat":40.615157,"lon":-74.153404,"created":"2010-07-27","closed":"2010-07-29","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"18568931","borough":"Staten Island","address":"27 NEUTRAL AVENUE","zip":"10306","lat":40.56074,"lon":-74.102724,"created":"2010-08-27","closed":"2010-09-02","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"19136135","borough":"Staten Island","address":"1020 POST AVENUE","zip":"10302","lat":40.633195,"lon":-74.134775,"created":"2010-11-16","closed":"2010-11-17","status":"Closed","property":"3+ Family Mixed Use Building","detail":"Rat Sighting"},{"id":"20104924","borough":"Staten Island","address":"67 ARNOLD STREET","zip":"10301","lat":40.638593,"lon":-74.090644,"created":"2011-03-25","closed":"2011-03-30","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"20573486","borough":"Staten Island","address":"21 PRINCEWOOD AVENUE","zip":"10309","lat":40.528125,"lon":-74.197867,"created":"2011-06-05","closed":"2011-06-08","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"20710848","borough":"Staten Island","address":"62 NEWBERRY AVENUE","zip":"10304","lat":40.594858,"lon":-74.093757,"created":"2011-06-25","closed":"2011-06-28","status":"Closed","property":"1-2 Family Mixed Use Building","detail":"Rat Sighting"},{"id":"20998992","borough":"Staten Island","address":"1038 ROSSVILLE AVENUE","zip":"10309","lat":40.552331,"lon":-74.212174,"created":"2011-08-09","closed":"2011-08-11","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"22471190","borough":"Staten Island","address":"ANDREWS AVENUE \u0026 NATICK STREET","zip":"10306","lat":40.570734,"lon":-74.136614,"created":"2012-01-06","closed":"2012-01-31","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"22933907","borough":"Staten Island","address":"21 JOSEPHINE STREET","zip":"10314","lat":40.612391,"lon":-74.123157,"created":"2012-03-23","closed":"2012-03-26","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"23426319","borough":"Staten Island","address":"180 GIFFORDS LANE","zip":"10308","lat":40.555884,"lon":-74.152382,"created":"2012-06-15","closed":"2012-06-21","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"23737438","borough":"Staten Island","address":"1034 ROSSVILLE AVENUE","zip":"10309","lat":40.552284,"lon":-74.212156,"created":"2012-08-03","closed":"2012-08-24","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"23847832","borough":"Staten Island","address":"51 NORTH BURGHER AVENUE","zip":"10310","lat":40.640003,"lon":-74.11549,"created":"2012-08-21","closed":"2012-09-06","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"24449465","borough":"Staten Island","address":"16 PENTON STREET","zip":"10309","lat":40.522381,"lon":-74.215823,"created":"2012-11-20","closed":"2012-12-26","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"24816890","borough":"Staten Island","address":"CASTLETON AVENUE \u0026 PINE STREET","zip":"10301","lat":40.635349,"lon":-74.085974,"created":"2013-01-19","closed":"2013-02-22","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"25323481","borough":"Staten Island","address":"772 BRIGHTON AVENUE","zip":"10301","lat":40.633216,"lon":-74.09723,"created":"2013-04-08","closed":"2013-04-23","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"25839994","borough":"Staten Island","address":"308 EDGEGROVE AVENUE","zip":"10312","lat":40.541345,"lon":-74.182658,"created":"2013-06-28","closed":"2013-09-06","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"26016629","borough":"Staten Island","address":"PRINCEWOOD AVENUE \u0026 VERNON AVENUE","zip":"10309","lat":40.528593,"lon":-74.197382,"created":"2013-07-26","closed":"2013-09-12","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"26212305","borough":"Staten Island","address":"1170 MASON AVENUE","zip":"10306","lat":40.575581,"lon":-74.09689,"created":"2013-08-28","closed":"2013-08-29","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"26994656","borough":"Staten Island","address":"RIGA STREET \u0026 DUGDALE STREET","zip":"10306","lat":40.555148,"lon":-74.118521,"created":"2013-12-26","closed":"2013-12-31","status":"Closed","property":"Vacant Building","detail":"Rat Sighting"},{"id":"27952182","borough":"Staten Island","address":"196 BAY STREET","zip":"10301","lat":40.637168,"lon":-74.076529,"created":"2014-05-01","closed":"2014-05-05","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"28138332","borough":"Staten Island","address":"16 MAPLETON AVENUE","zip":"10306","lat":40.574547,"lon":-74.092789,"created":"2014-05-28","closed":"2014-06-20","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"28294423","borough":"Staten Island","address":"85 DUER AVENUE","zip":"10305","lat":40.600253,"lon":-74.06357,"created":"2014-06-19","closed":"2014-06-19","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"28757189","borough":"Staten Island","address":"476 CLIFTON AVENUE","zip":"10305","lat":40.60891,"lon":-74.076345,"created":"2014-08-26","closed":"2014-09-12","status":"Closed","property":"Vacant Lot","detail":"Rat Sighting"},{"id":"28811888","borough":"Staten Island","address":"30 BARRETT AVENUE","zip":"10302","lat":40.625754,"lon":-74.136597,"created":"2014-09-03","closed":"2014-09-15","status":"Closed","property":"Commercial Building","detail":"Rat Sighting"},{"id":"30192169","borough":"Staten Island","address":"334 VANPELT AVENUE","zip":"10303","lat":40.627401,"lon":-74.155637,"created":"2015-03-16","closed":"2015-03-25","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"30352567","borough":"Staten Island","address":"280 CORONA AVENUE","zip":"10306","lat":40.5635,"lon":-74.142563,"created":"2015-04-07","closed":"2015-03-30","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"30993742","borough":"Staten Island","address":"310 SLEIGHT AVENUE","zip":"10307","lat":40.509889,"lon":-74.242179,"created":"2015-07-02","closed":null,"status":"Pending","property":"Vacant Building","detail":"Rat Sighting"},{"id":"31174530","borough":"Staten Island","address":"SOUTH RAILROAD AVENUE \u0026 TYSENS LANE","zip":"10306","lat":40.567967,"lon":-74.123093,"created":"2015-07-27","closed":"2015-08-11","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"31662698","borough":"Staten Island","address":"43 MORRIS STREET","zip":"10309","lat":40.553654,"lon":-74.210976,"created":"2015-10-02","closed":"2015-10-02","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"31865381","borough":"Staten Island","address":"476 ADAMS AVE","zip":"10306","lat":40.576679,"lon":-74.093317,"created":"2015-10-28","closed":"2016-01-12","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"33166290","borough":"Staten Island","address":"750A PATTERSON AVENUE","zip":"10306","lat":40.572977,"lon":-74.088996,"created":"2016-04-19","closed":"2016-03-15","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"33292981","borough":"Staten Island","address":"30 ANDROS AVENUE","zip":"10303","lat":40.637298,"lon":-74.162365,"created":"2016-05-06","closed":"2016-05-13","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"33704574","borough":"Staten Island","address":"234 TARGEE STREET","zip":"10304","lat":40.621566,"lon":-74.084187,"created":"2016-06-27","closed":"2016-07-03","status":"Closed","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"33861030","borough":"Staten Island","address":"15 WALCOTT AVENUE","zip":"10314","lat":40.596645,"lon":-74.134543,"created":"2016-07-17","closed":"2016-07-13","status":"Pending","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"34052812","borough":"Staten Island","address":"43 BRADLEY AVENUE","zip":"10314","lat":40.611442,"lon":-74.132297,"created":"2016-08-10","closed":null,"status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"34573638","borough":"Staten Island","address":"460N BRIELLE AVENUE","zip":"10314","lat":40.593798,"lon":-74.135437,"created":"2016-10-19","closed":"2016-10-03","status":"Pending","property":"3+ Family Apt. Building","detail":"Rat Sighting"},{"id":"34985040","borough":"Staten Island","address":"9 OAK STREET","zip":"10305","lat":40.613115,"lon":-74.07603,"created":"2016-12-11","closed":"2016-12-27","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"35999813","borough":"Staten Island","address":"114 FAHY AVENUE","zip":"10314","lat":40.6192,"lon":-74.165181,"created":"2017-04-21","closed":"2017-04-28","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"36074693","borough":"Staten Island","address":"557 MILL ROAD","zip":"10306","lat":40.555943,"lon":-74.116291,"created":"2017-05-01","closed":"2017-05-30","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"36408629","borough":"Staten Island","address":"619 RAMONA AVENUE","zip":"10309","lat":40.536128,"lon":-74.206406,"created":"2017-06-10","closed":"2017-06-16","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"36636178","borough":"Staten Island","address":"OGORMAN AVENUE \u0026 KELVIN AVENUE","zip":"10306","lat":40.555283,"lon":-74.135385,"created":"2017-07-07","closed":"2017-08-04","status":"Closed","property":"Catch Basin/Sewer","detail":"Rat Sighting"},{"id":"36954344","borough":"Staten Island","address":"289 WILLOW ROAD EAST","zip":"10314","lat":40.618037,"lon":-74.151137,"created":"2017-08-15","closed":"2017-09-14","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"37397582","borough":"Staten Island","address":"104 DUER AVENUE","zip":"10305","lat":40.599479,"lon":-74.063025,"created":"2017-10-10","closed":"2017-10-13","status":"Closed","property":"Other (Explain Below)","detail":"Rat Sighting"},{"id":"38093290","borough":"Staten Island","address":"18 GARIBALDI AVENUE","zip":"10306","lat":40.562435,"lon":-74.101906,"created":"2018-01-02","closed":"2018-01-16","status":"Closed","property":"Vacant Building","detail":"Rat Sighting"},{"id":"38587325","borough":"Staten Island","address":"23 OCEAN AVENUE","zip":"10305","lat":40.597883,"lon":-74.064813,"created":"2018-03-01","closed":"2018-03-07","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"39253574","borough":"Staten Island","address":"158 LUCILLE AVENUE","zip":"10309","lat":40.548141,"lon":-74.218911,"created":"2018-05-22","closed":"2018-06-08","status":"Closed","property":"1-2 Family Dwelling","detail":"Rat Sighting"},{"id":"39514179","borough":"Staten Island","address":"168 MELVIN AVE","zip":"10314","lat":40.590792,"lon":-74.190012,"created":"2018-06-20","closed":null,"status":"Assigned","property":"1-2 Family Dwelling","detail":"Rat Sighting"}]},"Unspecified":{"total":4,"closed":0,"resolvedCount":0,"resolutionDays":0,"statuses":{"Pending":4},"properties":{"1-2 Family Dwelling":3,"3+ Family Apt. Building":1},"monthly":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,null,null,null,null,null,null],"zips":{},"zipGeocoded":{},"missingZip":4,"malformedZip":0,"missingCoords":4,"pins":[]}}}</script>
+  <script>
+(() => {
+  const historicalLength = 108;
+  const forecastLength = 12;
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const slopeNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2, signDisplay: "exceptZero" });
+  const byId = (id) => document.getElementById(id);
+  const plot = byId("trend-plot");
+  const svg = byId("trend-svg");
+  const tooltip = byId("trend-tooltip");
+  const heatmap = byId("trend-heatmap");
+  let model = null;
+  let chart = null;
+  let cursor = null;
+  let selection = null;
+
+  function monthName(index, short = false) {
+    const month = months[index % 12];
+    return (short ? month.slice(0, 3) : month) + " " + (2010 + Math.floor(index / 12));
+  }
+
+  function fitLine(counts, partial) {
+    const points = counts.flatMap((count, index) => count === null || partial.has(index) ? [] : [[index, count]]);
+    if (points.length < 2) return null;
+
+    let xSum = 0;
+    let ySum = 0;
+    let xxSum = 0;
+    let xySum = 0;
+    for (const [x, y] of points) {
+      xSum += x;
+      ySum += y;
+      xxSum += x * x;
+      xySum += x * y;
+    }
+    const size = points.length;
+    const slope = (size * xySum - xSum * ySum) / (size * xxSum - xSum * xSum);
+    const intercept = (ySum - slope * xSum) / size;
+    return {
+      slope,
+      first: points[0][0],
+      last: points[size - 1][0],
+      at: (index) => intercept + slope * index
+    };
+  }
+
+  function readout(index) {
+    const count = model.counts[index];
+    const reported = count != null
+      ? number.format(count) + " reported" + (model.partial.has(index) ? " (partial month)" : "")
+      : "No workbook coverage";
+    const fitted = model.fit && index >= model.fit.first
+      ? number.format(model.fit.at(index)) + (index > model.lastObserved ? " projected" : " fitted")
+      : "";
+    return index > model.lastObserved ? [fitted || reported] : [reported, fitted].filter(Boolean);
+  }
+
+  function showCursor(index, announce = false) {
+    cursor = index;
+    if (!chart) return;
+    const guide = byId("trend-guide");
+    if (index === null) {
+      guide.setAttribute("visibility", "hidden");
+      tooltip.hidden = true;
+      return;
+    }
+
+    const position = chart.x(index);
+    guide.setAttribute("visibility", "visible");
+    guide.setAttribute("transform", "translate(" + position + " 0)");
+    const dot = byId("trend-guide-dot");
+    const count = model.counts[index];
+    const value = count ?? (model.fit && index >= model.fit.first ? model.fit.at(index) : null);
+    dot.setAttribute("visibility", value === null ? "hidden" : "visible");
+    if (value !== null) {
+      dot.setAttribute("cy", chart.y(value));
+      dot.setAttribute("fill", count == null ? "var(--accent2, #ffbb77)" : "var(--accent, #53dec4)");
+    }
+
+    const label = monthName(index);
+    const lines = readout(index);
+    const heading = document.createElement("strong");
+    heading.textContent = label;
+    tooltip.replaceChildren(heading, ...lines.map((line) => {
+      const element = document.createElement("div");
+      element.textContent = line;
+      return element;
+    }));
+    tooltip.hidden = false;
+    const tooltipWidth = tooltip.offsetWidth;
+    const left = position + tooltipWidth + 14 < chart.width ? position + 12 : position - tooltipWidth - 12;
+    tooltip.style.left = Math.max(4, Math.min(left, chart.width - tooltipWidth - 4)) + "px";
+    if (announce) byId("trend-chart-announcement").textContent = [label, ...lines].join(". ");
+  }
+
+  function drawChart() {
+    const { clientWidth: width, clientHeight: height } = plot;
+    if (!model || width < 120 || height < 120) return;
+
+    const { counts, partial, fit, lastObserved, lastIndex } = model;
+    const left = width < 460 ? 43 : 51;
+    const right = width - 12;
+    const top = 23;
+    const bottom = height - 35;
+    const peak = Math.max(1, ...counts, fit?.at(lastIndex) ?? 0, fit?.at(fit.first) ?? 0);
+    const roughStep = Math.max(1, peak / 5);
+    const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+    const tick = ([1, 2, 2.5, 5, 10].find((step) => step * magnitude >= roughStep) ?? 10) * magnitude;
+    const maximum = Math.max(1, Math.ceil(peak / tick) * tick);
+    const minimum = Math.floor(Math.min(0, fit?.at(lastIndex) ?? 0, fit?.at(fit.first) ?? 0) / tick) * tick;
+    const x = (index) => left + (right - left) * index / lastIndex;
+    const y = (value) => bottom - (bottom - top) * (value - minimum) / (maximum - minimum);
+    chart = { x, y, width, left, right, lastIndex };
+
+    const grid = [];
+    for (let i = Math.round(minimum / tick); i <= Math.round(maximum / tick); i++) {
+      const value = i * tick;
+      const position = y(value);
+      grid.push('<line x1="' + left + '" y1="' + position + '" x2="' + right + '" y2="' + position + '" stroke="var(--edge, #26364a)"/>');
+      grid.push('<text x="' + (left - 7) + '" y="' + (position + 4) + '" text-anchor="end">' + number.format(value) + '</text>');
+    }
+
+    const years = width >= 625 ? [0, 12, 24, 36, 48, 60, 72, 84, 96, 108] : [0, 24, 48, 72, 96];
+    if (width >= 410 && width < 625) years.push(108);
+    const ticks = years.filter((index) => index <= lastIndex).map((index) => {
+      return '<text x="' + x(index) + '" y="' + (bottom + 21) + '" text-anchor="middle">' + (2010 + index / 12) + '</text>';
+    });
+    const forecastEdge = x(lastObserved + 0.5);
+    const forecastArea = fit
+      ? '<rect x="' + forecastEdge + '" y="' + top + '" width="' + (right - forecastEdge) + '" height="' + (bottom - top) + '" fill="var(--accent2, #ffbb77)" opacity=".09"/>' +
+        '<line x1="' + forecastEdge + '" y1="' + top + '" x2="' + forecastEdge + '" y2="' + bottom + '" stroke="var(--accent2, #ffbb77)" stroke-opacity=".4" stroke-dasharray="3 5"/>' +
+        (right - forecastEdge > 60 ? '<text x="' + (right - 4) + '" y="' + (top - 7) + '" text-anchor="end" fill="var(--accent2, #ffbb77)">Forecast</text>' : "")
+      : "";
+
+    const segments = [];
+    let current = [];
+    counts.forEach((count, index) => {
+      if (count !== null) current.push([x(index), y(count)]);
+      if ((count === null || index === counts.length - 1) && current.length) {
+        segments.push(current);
+        current = [];
+      }
+    });
+    const observed = segments.map((points) => {
+      if (points.length === 1) {
+        const [[px, py]] = points;
+        return '<circle cx="' + px + '" cy="' + py + '" r="3" fill="var(--accent, #53dec4)"/>';
+      }
+      const line = "M" + points.map((point) => point.join(" ")).join(" L");
+      const area = line + " L" + points.at(-1)[0] + " " + y(0) + " L" + points[0][0] + " " + y(0) + " Z";
+      return '<path d="' + area + '" fill="url(#trend-fill)"/>' +
+        '<path d="' + line + '" fill="none" stroke="var(--accent, #53dec4)" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>';
+    }).join("");
+    const fitted = fit ? '<path d="M' + x(fit.first) + ' ' + y(fit.at(fit.first)) +
+      ' L' + x(lastIndex) + ' ' + y(fit.at(lastIndex)) +
+      '" fill="none" stroke="var(--accent2, #ffbb77)" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round"/>' : "";
+    const partialDots = [...partial].filter((index) => counts[index] != null).map((index) => {
+      return '<circle cx="' + x(index) + '" cy="' + y(counts[index]) + '" r="3.5" fill="var(--panel, #101a28)" stroke="var(--accent, #53dec4)" stroke-width="2"/>';
+    }).join("");
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.innerHTML = '<defs><linearGradient id="trend-fill" x1="0" x2="0" y1="0" y2="1" gradientUnits="objectBoundingBox">' +
+      '<stop offset="0%" stop-color="var(--accent, #53dec4)" stop-opacity=".24"/><stop offset="100%" stop-color="var(--accent, #53dec4)" stop-opacity=".015"/>' +
+      '</linearGradient></defs><g font-size="' + (width < 460 ? 10 : 11) + '" fill="var(--muted, #9aacbf)">' +
+      forecastArea + grid.join("") + ticks.join("") + '</g>' + observed + fitted + partialDots +
+      '<g id="trend-guide" visibility="hidden"><line x1="0" y1="' + top + '" x2="0" y2="' + bottom +
+      '" stroke="var(--muted, #9aacbf)" stroke-opacity=".65" stroke-dasharray="3 4"/><circle id="trend-guide-dot" cx="0" r="4.2" stroke="var(--panel, #101a28)" stroke-width="2"/></g>';
+    showCursor(cursor);
+  }
+
+  function setSelection(index) {
+    const previous = heatmap.querySelector('button[aria-pressed="true"]');
+    if (previous) previous.setAttribute("aria-pressed", "false");
+    selection = index;
+    const active = heatmap.querySelector('[data-month="' + index + '"]');
+    if (active) active.setAttribute("aria-pressed", "true");
+    const count = model.counts[index];
+    const detail = count === null ? "No workbook coverage" : number.format(count) + " reported" + (model.partial.has(index) ? " (partial month)" : "");
+    byId("trend-heat-selection").textContent = monthName(index) + " · " + detail;
+    showCursor(index);
+  }
+
+  function drawHeatmap() {
+    const { counts, partial } = model;
+    const peak = Math.max(0, ...counts);
+    const years = Array.from({ length: 9 }, (_, i) => 2010 + i);
+    const colors = Array.from({ length: 6 }, (_, i) => '<span class="trend-heat-' + i + '"></span>').join("");
+    byId("trend-heat-legend").innerHTML = '<span>0</span><span class="trend-swatches" aria-hidden="true">' + colors +
+      '</span><span>' + number.format(peak) + ' sightings</span>';
+    const header = '<thead><tr><th scope="col">Month</th>' + years.map((year) => '<th scope="col">' + year + '</th>').join("") + '</tr></thead>';
+    const rows = months.map((month, offset) => {
+      const cells = years.map((_, yearIndex) => {
+        const index = yearIndex * 12 + offset;
+        const count = counts[index];
+        const isPartial = partial.has(index) && count !== null;
+        const shade = peak ? Math.min(5, Math.floor(count / peak * 6)) : 0;
+        const color = count === null ? "empty" : shade;
+        const label = monthName(index) + ", " + (count === null ? "no workbook coverage" : number.format(count) + " sightings");
+        return '<td><button type="button" class="trend-heat-' + color + '" data-month="' + index + '" tabindex="' +
+          (index === (selection ?? 0) ? "0" : "-1") + '" aria-pressed="' + (index === selection) + '" aria-label="' + label +
+          (isPartial ? ", partial month" : "") + '">' + (count === null ? "—" : number.format(count)) +
+          (isPartial ? '<sup aria-hidden="true">*</sup>' : "") + '</button></td>';
+      }).join("");
+      return '<tr><th scope="row">' + month + '</th>' + cells + '</tr>';
+    }).join("");
+    heatmap.innerHTML = header + '<tbody>' + rows + '</tbody>';
+    const notes = [];
+    if (partial.size) notes.push("* Partial month.");
+    if (counts.includes(null)) notes.push("— Outside workbook coverage.");
+    notes.push("Colors scale to the selected borough view.");
+    byId("trend-heat-note").textContent = notes.join(" ");
+    if (selection !== null) setSelection(selection);
+  }
+
+  function indexAt(event) {
+    const position = event.clientX - plot.getBoundingClientRect().left;
+    return Math.max(0, Math.min(chart.lastIndex, Math.round((position - chart.left) / (chart.right - chart.left) * chart.lastIndex)));
+  }
+
+  plot.addEventListener("pointermove", (event) => {
+    if (chart && event.pointerType !== "touch") showCursor(indexAt(event));
+  });
+  plot.addEventListener("pointerleave", () => {
+    if (document.activeElement !== plot) showCursor(selection);
+  });
+  plot.addEventListener("click", (event) => {
+    if (chart) showCursor(indexAt(event), true);
+  });
+  plot.addEventListener("focus", () => {
+    if (model) showCursor(cursor ?? Math.max(0, model.lastObserved), true);
+  });
+  plot.addEventListener("blur", () => showCursor(selection));
+  plot.addEventListener("keydown", (event) => {
+    if (!chart) return;
+    const index = cursor ?? Math.max(0, model.lastObserved);
+    const moves = { ArrowLeft: index - 1, ArrowRight: index + 1, Home: 0, End: chart.lastIndex };
+    if (!Object.hasOwn(moves, event.key)) return;
+    event.preventDefault();
+    showCursor(Math.max(0, Math.min(chart.lastIndex, moves[event.key])), true);
+  });
+  heatmap.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-month]");
+    if (!button) return;
+    const focusable = heatmap.querySelector('button[tabindex="0"]');
+    if (focusable) focusable.tabIndex = -1;
+    button.tabIndex = 0;
+    setSelection(Number(button.dataset.month));
+  });
+  heatmap.addEventListener("keydown", (event) => {
+    const button = event.target.closest("button[data-month]");
+    if (!button) return;
+    const index = Number(button.dataset.month);
+    const month = index % 12;
+    const moves = {
+      ArrowUp: month > 0 ? index - 1 : index,
+      ArrowDown: month < 11 ? index + 1 : index,
+      ArrowLeft: Math.max(month, index - 12),
+      ArrowRight: Math.min(96 + month, index + 12),
+      Home: month,
+      End: 96 + month
+    };
+    if (!Object.hasOwn(moves, event.key)) return;
+    event.preventDefault();
+    button.tabIndex = -1;
+    const next = heatmap.querySelector('[data-month="' + moves[event.key] + '"]');
+    next.tabIndex = 0;
+    next.focus();
+  });
+  new ResizeObserver(drawChart).observe(plot);
+
+  window.renderTrends = (series, options = {}) => {
+    const counts = Array.from({ length: historicalLength }, (_, index) => Number.isFinite(series[index]) ? series[index] : null);
+    const partial = new Set((options.partialMonths ?? []).map((month) => {
+      if (Number.isInteger(month)) return month;
+      const [year, offset] = month.split("-").map(Number);
+      return (year - 2010) * 12 + offset - 1;
+    }));
+    const lastObserved = counts.findLastIndex((count) => count !== null);
+    const fit = fitLine(counts, partial);
+    const lastIndex = Math.max(historicalLength - 1, lastObserved + (fit ? forecastLength : 0));
+    model = { counts, partial, fit, lastObserved, lastIndex };
+    chart = null;
+    cursor = selection;
+    const direction = fit ? Math.abs(fit.slope) < .005 ? "Flat" : fit.slope > 0 ? "Rising" : "Falling" : "—";
+    byId("trend-direction").textContent = direction;
+    byId("trend-slope").textContent = fit ? slopeNumber.format(fit.slope) + " sightings / month" : "—";
+    byId("trend-forecast-window").textContent = fit
+      ? monthName(lastObserved + 1, true) + " – " + monthName(lastObserved + forecastLength, true) : "—";
+    byId("trend-partial-key").hidden = !partial.size;
+    const scope = options.scope ?? "All Boroughs";
+    svg.setAttribute("aria-label", "Reported monthly sightings and linear projection for " + scope);
+    byId("trend-model-note").textContent = fit
+      ? "Workbook coverage Jan 1, 2010 – Jun 25, 2018. Linear fit uses complete months through " + monthName(fit.last, true) + "."
+      : "A linear fit requires at least two complete months.";
+    drawHeatmap();
+    drawChart();
+  };
+})();
+  </script>
+  <script>
+(() => {
+  "use strict";
+  const svg = document.getElementById("rat-map-canvas");
+  if (!svg) return;
+
+  const id = (name) => document.getElementById("rat-map-" + name);
+  const land = id("land");
+  const labels = id("labels");
+  const points = id("points");
+  const picker = id("picker");
+  const modes = document.querySelectorAll("[data-rat-map-mode]");
+  const number = new Intl.NumberFormat("en-US");
+  const stops = [
+    [99, "#d2fff1", "1–99"],
+    [499, "#90efd4", "100–499"],
+    [999, "#4bd3b5", "500–999"],
+    [1999, "#209f8e", "1,000–1,999"],
+    [Infinity, "#11675e", "2,000+"],
+  ];
+  const boroughLabels = {
+    Bronx: [-73.839, 40.888],
+    Brooklyn: [-73.958, 40.645],
+    Manhattan: [-74.003, 40.805],
+    Queens: [-73.788, 40.748],
+    "Staten Island": [-74.151, 40.566],
+  };
+  const world = [];
+  const boroughShapes = [];
+  const boroughText = [];
+  const labelPoints = [];
+  const pointers = new Map();
+  let state;
+  let scope;
+  let mode = "zip";
+  let markers = [];
+  let selected = null;
+  let view = null;
+  let home = null;
+  let width = 0;
+  let height = 0;
+  let moved = false;
+
+  function makeSvg(name, attrs, content) {
+    const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, value);
+    if (content) element.textContent = content;
+    return element;
+  }
+
+  function make(name, content, className) {
+    const element = document.createElement(name);
+    if (content) element.textContent = content;
+    if (className) element.className = className;
+    return element;
+  }
+
+  function project(lon, lat) {
+    return [(lon + 74) * 0.758, 40.7 - lat];
+  }
+
+  // Decode quantized, signed longitude/latitude deltas from the inline basemap.
+  function unpackRing(encoded) {
+    const coordinates = [-743000, 404500];
+    const ring = [];
+    let axis = 0;
+    let value = 0;
+    let shift = 0;
+    for (const char of atob(encoded)) {
+      const byte = char.charCodeAt(0);
+      value |= (byte & 127) << shift;
+      if (byte & 128) {
+        shift += 7;
+        continue;
+      }
+      coordinates[axis] += value & 1 ? -(value >> 1) - 1 : value >> 1;
+      if (axis === 1) ring.push(project(coordinates[0] / 10000, coordinates[1] / 10000));
+      axis = 1 - axis;
+      value = 0;
+      shift = 0;
+    }
+    return ring;
+  }
+
+  function label(text, lon, lat, water = false) {
+    const el = makeSvg("text", { class: "rat-map-label" + (water ? " rat-map-water" : "") }, text);
+    labels.append(el);
+    labelPoints.push({ el, point: project(lon, lat) });
+    if (!water) boroughText.push({ name: text, el });
+  }
+
+  function loadGeometry() {
+    for (const [name, encoded] of geometry) {
+      const rings = encoded.map(unpackRing);
+      const path = rings.map((ring) => "M" + ring.map(([x, y]) => x.toFixed(5) + "," + y.toFixed(5)).join("L") + "Z").join("");
+      const el = makeSvg("path", { class: "rat-map-borough", d: path });
+      land.append(el);
+      world.push(...rings.flat());
+      boroughShapes.push({ name, el, ringPoints: rings.flat() });
+      label(name, ...boroughLabels[name]);
+    }
+    label("Hudson River", -74.062, 40.786, true);
+    label("Upper Bay", -74.069, 40.669, true);
+    label("Jamaica Bay", -73.828, 40.614, true);
+    label("Atlantic Ocean", -73.897, 40.530, true);
+  }
+
+  function bounds(list) {
+    const xs = list.map((p) => p[0]);
+    const ys = list.map((p) => p[1]);
+    const west = Math.min(...xs);
+    const east = Math.max(...xs);
+    const north = Math.min(...ys);
+    const south = Math.max(...ys);
+    const scale = Math.min((width - 65) / Math.max(east - west, .045), (height - 65) / Math.max(south - north, .045));
+    return { x: (west + east) / 2, y: (north + south) / 2, scale };
+  }
+
+  function reset() {
+    if (!state || width <= 65 || height <= 65) return;
+    const borough = boroughShapes.find((shape) => shape.name === state.borough);
+    const scopePoints = borough ? borough.ringPoints : world;
+    home = bounds(scopePoints);
+    view = { ...home };
+    redraw();
+  }
+
+  function screen([x, y]) {
+    return [(x - view.x) * view.scale + width / 2, (y - view.y) * view.scale + height / 2];
+  }
+
+  function redraw() {
+    if (!view) return;
+    const [x, y] = screen([0, 0]);
+    land.setAttribute("transform", "translate(" + x + " " + y + ") scale(" + view.scale + ")");
+    for (const { el, point } of labelPoints) {
+      const [sx, sy] = screen(point);
+      el.setAttribute("x", sx);
+      el.setAttribute("y", sy);
+    }
+    for (const { el, point } of markers) {
+      const [sx, sy] = screen(point);
+      el.setAttribute("transform", "translate(" + sx + " " + sy + ")");
+    }
+    const pixelsPerKm = view.scale / 111.2;
+    const km = [50, 20, 10, 5, 2, 1, .5, .2, .1, .05].find((length) => length * pixelsPerKm <= 87) ?? .05;
+    id("scale-label").textContent = km < 1 ? number.format(km * 1000) + " m" : km + " km";
+    id("scale-bar").style.width = Math.max(km * pixelsPerKm, 15) + "px";
+    id("plus").disabled = view.scale >= home.scale * 18;
+    id("minus").disabled = view.scale <= home.scale * .67;
+  }
+
+  function resize() {
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 65 || rect.height <= 65 || (rect.width === width && rect.height === height)) return;
+    width = rect.width;
+    height = rect.height;
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    reset();
+  }
+
+  function scaleBy(multiplier, anchor = [width / 2, height / 2], previousAnchor = anchor) {
+    if (!view) return;
+    const next = Math.min(home.scale * 18, Math.max(home.scale * .67, view.scale * multiplier));
+    view.x += (previousAnchor[0] - width / 2) / view.scale - (anchor[0] - width / 2) / next;
+    view.y += (previousAnchor[1] - height / 2) / view.scale - (anchor[1] - height / 2) / next;
+    view.scale = next;
+    redraw();
+  }
+
+  function pan(dx, dy) {
+    if (!view) return;
+    view.x -= dx / view.scale;
+    view.y -= dy / view.scale;
+    redraw();
+  }
+
+  function local(x, y) {
+    const rect = svg.getBoundingClientRect();
+    return [x - rect.left, y - rect.top];
+  }
+
+  function mid(a, b) {
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+
+  function distance(a, b) {
+    return Math.hypot(a[0] - b[0], a[1] - b[1]);
+  }
+
+  function canMap(record) {
+    return Number.isFinite(record.lat) && Number.isFinite(record.lon);
+  }
+
+  function selectMarker(marker, jump = false) {
+    if (selected) {
+      selected.el.classList.remove("is-selected");
+      selected.el.setAttribute("aria-pressed", "false");
+    }
+    selected = marker;
+    const detail = id("detail");
+    if (!marker) {
+      picker.value = "";
+      detail.replaceChildren(make("p", mode === "zip" ? "Select a circle to see the ZIP code and its sighting count." : "Select a pin to read the address and case details.", "subtle"));
+      return;
+    }
+    picker.value = String(marker.index);
+    marker.el.classList.add("is-selected");
+    marker.el.setAttribute("aria-pressed", "true");
+    points.append(marker.el);
+    const r = marker.record;
+    if (mode === "zip") {
+      detail.replaceChildren(make("h3", "ZIP " + r.zip), make("p", number.format(r.count) + " sightings", "subtle"));
+    } else {
+      const list = make("dl");
+      for (const [labelText, value] of [
+        ["Case ID", r.id], ["Borough", r.borough || state.borough], ["ZIP code", r.zip],
+        ["Property", r.property || r.type], ["Status", r.status], ["Opened", r.created],
+        ["Closed", r.closed], ["Details", r.detail],
+      ]) {
+        if (value === undefined || value === null || value === "") continue;
+        list.append(make("dt", labelText), make("dd", String(value)));
+      }
+      detail.replaceChildren(make("h3", r.address || "Address unavailable"), list);
+    }
+    if (jump && view) {
+      [view.x, view.y] = marker.point;
+      view.scale = Math.max(view.scale, home.scale * 1.8);
+      redraw();
+    }
+  }
+
+  function makeMarker(record, index) {
+    const isZip = mode === "zip";
+    const title = isZip ? "ZIP " + record.zip + ", " + number.format(record.count) + " sightings" :
+      (record.address || "Address unavailable") + (record.id ? ", case " + record.id : "");
+    const el = makeSvg("g", {
+      class: "rat-map-marker", role: "button", tabindex: "-1", "aria-label": title, "aria-pressed": "false",
+    });
+    const marker = { record, index, title, el, point: project(record.lon, record.lat) };
+    el.append(
+      makeSvg("title", {}, title),
+      makeSvg("circle", { r: isZip ? "8" : "9", class: "rat-map-marker-hit" }),
+      makeSvg("circle", { r: "8", class: "rat-map-marker-ring" })
+    );
+    if (isZip) {
+      const fill = stops.find(([ceiling]) => record.count <= ceiling)[1];
+      const large = record.count > 999;
+      el.append(makeSvg("circle", { r: large ? "5.7" : "4.6", class: "rat-map-marker-zip" + (large ? " is-large" : ""), fill }));
+    } else {
+      el.append(
+        makeSvg("path", { class: "rat-map-marker-pin", d: "M0 4.5S-5 .15-5-3.3a5 5 0 1 1 10 0C5 .15 0 4.5 0 4.5Z" }),
+        makeSvg("circle", { cy: "-3.2", r: "1.4", fill: "#5a3828" })
+      );
+    }
+    el.addEventListener("click", () => { if (!moved) selectMarker(marker); });
+    el.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectMarker(marker);
+      }
+    });
+    return marker;
+  }
+
+  function paintMode() {
+    const isZip = mode === "zip";
+    for (const button of modes) button.setAttribute("aria-pressed", String(button.dataset.ratMapMode === mode));
+    const all = isZip ? state.zipRows : state.pins;
+    const visible = all.filter(canMap);
+    if (isZip) visible.sort((a, b) => String(a.zip).localeCompare(String(b.zip)));
+    markers = visible.map(makeMarker);
+    const drawOrder = isZip ? [...markers].sort((a, b) => b.record.count - a.record.count) : markers;
+    points.replaceChildren(...drawOrder.map((marker) => marker.el));
+    picker.replaceChildren(new Option(isZip ? "Choose a ZIP code…" : "Choose a sample case…", ""));
+    for (const marker of markers) picker.add(new Option(marker.title, String(marker.index)));
+    picker.disabled = markers.length === 0;
+    id("legend-title").textContent = isZip ? "Sightings per ZIP code" : "Sampled sightings";
+    const legend = isZip ? stops.map(([, color, label]) => [color, label]) : [["#ffbb77", "One sampled case"]];
+    id("legend").replaceChildren(...legend.map(([color, text]) => {
+      const swatch = make("span", "", "rat-map-swatch" + (isZip ? "" : " is-pin"));
+      swatch.style.backgroundColor = color;
+      const row = make("li");
+      row.append(swatch, document.createTextNode(text));
+      return row;
+    }));
+    if (isZip) {
+      const mapped = visible.reduce((total, zip) => total + zip.count, 0);
+      const omitted = state.sourceTotal - mapped;
+      id("coverage").textContent = number.format(visible.length) + " ZIP codes mapped. Circles use average report locations." +
+        (omitted > 0 ? " " + number.format(omitted) + " reports could not be assigned to a mapped ZIP." : "");
+    } else {
+      id("coverage").textContent = number.format(visible.length) + " sample pins in " + state.scope + ".";
+    }
+    selectMarker(null);
+    if (markers.length === 0) id("detail").textContent = "No mappable records in this view.";
+    redraw();
+  }
+
+  for (const button of modes) {
+    button.addEventListener("click", () => {
+      if (!state || button.dataset.ratMapMode === mode) return;
+      mode = button.dataset.ratMapMode;
+      paintMode();
+    });
+  }
+  picker.addEventListener("change", () => selectMarker(picker.value === "" ? null : markers[Number(picker.value)], true));
+  id("plus").addEventListener("click", () => scaleBy(1.4));
+  id("minus").addEventListener("click", () => scaleBy(1 / 1.4));
+  id("reset").addEventListener("click", reset);
+  svg.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || pointers.size >= 2) return;
+    if (!pointers.size) moved = false;
+    pointers.set(event.pointerId, local(event.clientX, event.clientY));
+  });
+  svg.addEventListener("pointermove", (event) => {
+    if (!pointers.has(event.pointerId)) return;
+    const previous = pointers.get(event.pointerId);
+    const point = local(event.clientX, event.clientY);
+    if (!moved && pointers.size === 1 && distance(point, previous) < 4) return;
+    if (!svg.hasPointerCapture(event.pointerId)) svg.setPointerCapture(event.pointerId);
+    moved = true;
+    svg.classList.add("is-panning");
+    pointers.set(event.pointerId, point);
+    if (pointers.size === 1) {
+      pan(point[0] - previous[0], point[1] - previous[1]);
+    } else {
+      const other = [...pointers.entries()].find(([key]) => key !== event.pointerId)[1];
+      const initial = Math.max(1, distance(previous, other));
+      scaleBy(distance(point, other) / initial, mid(point, other), mid(previous, other));
+    }
+  });
+  function finishPointer(event) {
+    pointers.delete(event.pointerId);
+    if (!pointers.size) svg.classList.remove("is-panning");
+  }
+  svg.addEventListener("pointerup", finishPointer);
+  svg.addEventListener("pointercancel", finishPointer);
+  svg.addEventListener("pointerleave", (event) => { if (!svg.hasPointerCapture(event.pointerId)) finishPointer(event); });
+  svg.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const delta = event.deltaY * (event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? height : 1);
+    scaleBy(Math.exp(-Math.max(-240, Math.min(240, delta)) * .003), local(event.clientX, event.clientY));
+  }, { passive: false });
+  svg.addEventListener("keydown", (event) => {
+    const actions = {
+      ArrowUp: () => pan(0, 36),
+      ArrowDown: () => pan(0, -36),
+      ArrowLeft: () => pan(36, 0),
+      ArrowRight: () => pan(-36, 0),
+      "+": () => scaleBy(1.4),
+      "=": () => scaleBy(1.4),
+      "-": () => scaleBy(1 / 1.4),
+      Home: reset,
+    };
+    if (Object.hasOwn(actions, event.key)) {
+      event.preventDefault();
+      actions[event.key]();
+    }
+  });
+
+  window.renderMap = (data) => {
+    const changed = scope !== data.scope;
+    state = data;
+    scope = data.scope;
+    if (changed) {
+      id("scope").textContent = scope + " · " + number.format(data.sourceTotal) + " reports";
+      for (const { name, el } of [...boroughShapes, ...boroughText]) {
+        el.classList.toggle("is-active", name === data.borough);
+        el.classList.toggle("is-muted", Boolean(data.borough) && name !== data.borough);
+      }
+      paintMode();
+      reset();
+    }
+    resize();
+  };
+
+  // Shoreline-clipped borough boundaries from NYC Environmental Health's NYC_geography repository.
+  const geometry = [
+    ["Bronx", ["3kLANGsLxwEgLT4fBgswFFBcHkIxogEzXD8IKQ==","1E/sPxgBFGNKIQ4xKg0nYSxXCx8rEz88U44BIjYtjAE=","lFOYPx8lECETPyItFQMzMA4uHyYGpgE2DVRV","jj38QSxINzwnBFVBJwCFAUSgAtYF9AepAgEmHAEsPBEOQCQRFkYeLzmuAScBGUYAPMkBrgJRCBjWBJsBV6UBLxE1SREoERkaJzEDOSxGOwYfIAgOG1qGATwSIE4XCgwUWjQDK2YLN3FSCQEdJx83DkMhGU8QQR8DG09LIQpVJS0bCjVaDi4fehUFCBsvBQoXeWwzNTQNFh8IXVEBDy0mPxEfKBMQKUECJmEhGQg/RIsBFQ8OJREHYhwqCzSBAYwBO29DQUoaSzQt6gFDCCM9C6cBYC0Dc1KDARSXAkEZGQJVcRg5aBriAT9wBjA+PhF0BmNJX0KjAQknIQ9ToQFXQB0DPh8TRTI/Fw2PAQMrFBNaqwEMPU5xIGA3SIEBX3dnChUedQ1XSm8WjQEpvQGjAakBPDU4XQZpmgEB+gNYtAF4qgHOAdAB"]],
+    ["Staten Island", ["hCL+HnIZfFk5BTwANRk6BD0LA6cBBiNkHWEYDGvaAcsBYo8BNhkSd8kDrwOzAusBN0UpB7MBvQErFG17SQB3O6MBzwF7ZyUMIWiOARBsYAY2QzyHAQdVTwhFNzNnJ8UBgwGRAl1TQUccRxvPAbkBVxwJHpUBE8cBqwGPAh2pAVFZATMdLwpTTiNEBVIsJhhM8gGEATkSAjgXFDJ2DUo3NAlEKzIgNDIoPgFQOAIoOgJgTJwBBxgZdiQkKAxmjAGUAwNwjgGWARliT4QBCGQmPBWQAQx0gAGiAaIBeD4CCBpKBwolXDQ2QXYLDhQFHxgNLg4LI8ABHyAajgEIIhyeASDMASMcGGYEsAFSygELhgJO"]],
+    ["Brooklyn", ["0kPSFDkKF1YcNEQwPhMoOSdR","sjuwF0gbQE8BKTcAcWgHHA==","+EWCF58BDztMLi5+DVA9","nkauGRYvSSUXAyk6QAs=","kkfQGVAvNh4kETNRMyESDxUVJwEVGjULGxg6Ig==","skOUGsUBHRU8JjjiAYQBJCMjNSA1ETM=","3kb+Gy1TpwEDAkocDlYdSig=","7EW4HBoZiQEDFi42EC4C","8Eb6HBktLw0obhwSMCc=","3jqiKURHFxXKAXcVEywbFRWWAVMdH1gxBElebS46ICMwHgwPuALIAWYSOocCJgoQQRQCJp0BOAgmmwE1BxBDbyMBG3qDARc7GEdfD2k77QGmArYBswIqFW0jHQxDKElgRQYnTEUUmAL/AYEBZQcZHBkVDRsYLwmZAXOdA7wBHwmgAocBNjtOAxIfEzUYNVgfOxtGDg4XRVOHARUTHApEowGKAQMdiAFtBltBDw8eMwYXCR4pZwM/OjCiAS0dEh8vHRU5dmVUDcQBKJoBA5gBKhoZDRdcqwIqPTtfJxGTAi8fRAo6K1hvCS0UARNlCwGeAT1afz5HJ1c4ChQrBAUjkAK5AURRXTVvBzs+TDBTLSMMAF43Dj6PAR8FeDXuAR4KO0UFXAIGFYECJMUECwQT1AETzAECHF/ZCXWxAQMHHi0YfxojShgoSiLKAQAEE7ABIz4uMxk9GhpGczFRFBBCai4XDGUrMhgPEhg2NQcOHh8JMUivAWjRAkJDIoEBjgEvkAEKvgFs0gETFjQ0Gg0uIi4ZLC5DMlYpFBInRGgEFRQSKDwFJxwsFx4eNSRAFyMmQgk9JigaSiUOEDkkGgpSMRYWOSQQEk4TAhgpGFInGTBMKyAeQypKJAEyEykzGz0MDDwpSwgeNwEfQ2sFJ4gBHAsQb1gGHFBDIhIsIRsXDhokSy8eGg08IwAeKBMUggFQDg0nFxYZQjorDEouLgA6VCgFDS6OAfABsgIcLDcWIhElLhcXIzQmMB8nNEIrQThMH294RCUVQigrAic0HyteFGiSAe4BRgFHEgw4GVgyUDokggELUB0PGyAYQBdWcaoBKSIjRHsFFVEPCyczDRIZGw0iSxFCHA4JIjIMCRZWHB4hIRM="]],
+    ["Queens", ["skjSFkorExkeFRUTOwY5OlUUYDg=","yEy6Fx8nQ1IEJCAIQCE=","ik7GGFAZBRtzAx0c","0k7sGBwxqwEAOiw=","wkioGCBIUA0IIRsP","qlPWGR4JAiFiGRsjICZGDdYBJDBZZFcIqQGtAQWHAUGbAQ7BAh/RBYMBlwN1vQTXAeMCaaMCU+0BIZ8F/QEW7gGIAogBqgEYbi54L0IQGg1uNDw8qAIGrgSMAt4BA8ACcCQN+gGCAVQjPTgmGkg7NVwsIrQBDpQBSktRETMQIxgIADZyXgA6YlJYEQ1FQV8hBikhDhcuA1BSGkVgBC0WKsoBXSIDFgoY","wFCgGlJP2QF7AyQuCAI2ThwHcg==","qlPiGZEBFmpiGAc=","vE7cGyoZRSdwFlkpI1kjHAhRGy0vAwYwN2wMNooBPA8M","ikyCHAcnEhYaSQ9HGGFHfAYaMzQ8AzEUE0YsDA==","6EjYGQaEATxgKz4kTC10GAhSOzQBFggETD7NAWRlNydAFQYbIw8LJzxRFw8IIRYADUkrIyWZASk3iQIKCh42GkQFKCIgFw4kJgMzFCAkAEJCXBEcDwsQFREhU3AbDUUe","qkS4IAkOcCQPRDYIJZwBNwclngETAQ9CJQk5iAJlEbcCxwELEC8dHyQtOV1uA0pXMh4glQFUFhYrHBYUyQF4GBZDXEYSHwg5eAwYUgJhFFFIqwEsS25RHlgiMERLR1UVgwEmiQEhJRJwxgFMFz0cgAK0AkpGZjA/SjhMggEZ5AGYAZIBhgHAASVaSz0vKwEfLRweaBpYLQ8VGhcZFw4PIhgMVWgOC3J8DgsaFBY+HVBaJC8/N94CqwFJYU0LQlOcAT36AYQBXwlNGilqEiAFrAF5A0lIFBxgEB0OBiIkFA84VA0MKDIQOBlYLDBbCTlkDwgsTi4RQLIBVooBRxYQ2AI9BzsuPTAerAEQFDIPKkAUSCNSf0UzdoEBMl+OAY8BgAFHNUQNViwiG1hQatgH3wQgiQKZAeMBwQEdgQJRQuUBHO0EJ2sN3wE2fQhdxQEtfTcAfxEHLl8zASAqIRRXGRJEFTaPAWCOAYEBFXPlAo8BVaUBExIQMG9WOwddfzMXEmdZIQMxLwcMF6EBOhQ8aKIBZgRwaAIqd1AZBRsokwTWATEyJWQOZkwmkAEFhwEYZyUbVyKZAREaKQQAFT0YUaoBNLUBDRU7Ah0aOfIBEAQfDEzNAsUBG0kAMyoKOjAqgQECZWIYLh8GBiU="]],
+    ["Manhattan", ["oiyCJlorEznNAVMxCgsciAGOAQ==","/DfsMdUB7QGzAZMB0AKQA1hAAS8=","ljvqNooBZwwlGSO7AcEBTxmBASgNNjQ8eEAXGjKqAQ==","sDroQlAPBScgIxYQESIuJy4UUBEmKylhiwGZASMcCxMYGbMB/QFnxwEM/wNqqQEFZ4EBX09zQyUNJSZpER3DBP8EC4kBJQwAFTqdASerAUeXAVEbwQIVTSMDJy8IEhcXFIsBU08BU2oefBgBBhgXBBBkRgUGHEUORAEzGD4AEFhDEkgHAiQ7BggsOAMGMj0GPgAKdhcCBBwkCjEMNAUIHDsMQAgEFDsMLAYnEC4EKxAuBCkQKiQdEiANVJABKxwyASwwKxQuDw4SLRQ4AyUYPBcOED0aRBEMFD8aRBMOEj8cRBUOFD8cNA8KDi8WNg0aJikQLgsKGiMSLBFGWJwEjgZueiESLkQ4EERiZN4BEX5mSr4BkgIwhgE=","jj38QSUmYyBWQigDODs="]],
+  ];
+  loadGeometry();
+  new ResizeObserver(resize).observe(svg);
+})();
+  </script>
+  <script>
+(() => {
+  "use strict";
+
+  const data = JSON.parse(document.getElementById("workbook-data").textContent);
+  const { metadata, boroughs } = data;
+  const filter = document.getElementById("borough-filter");
+  const names = [...filter.options].map(option => option.value).filter(Boolean);
+  const integer = new Intl.NumberFormat("en-US");
+  const decimal = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const dateLabel = new Intl.DateTimeFormat("en-US", {
+    month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
+  });
+  const num = value => integer.format(value);
+  const percent = (value, total) => total ? decimal.format(100 * value / total) + "%" : "—";
+  const text = (id, value) => { document.getElementById(id).textContent = value; };
+  const start = dateLabel.format(new Date(metadata.startDate));
+  const end = dateLabel.format(new Date(metadata.endDate));
+  const chartBoroughs = [...names].sort((a, b) => boroughs[b].total - boroughs[a].total);
+  const cityMax = boroughs[chartBoroughs[0]].total;
+  const partialMonths = metadata.partialMonths.map(month => {
+    if (Number.isInteger(month)) return month;
+    const [year, calendarMonth] = month.split("-").map(Number);
+    return (year - 2010) * 12 + calendarMonth - 1;
+  });
+  const propertyNames = {
+    "3+ Family Apt. Building": "3+ family apartment building",
+    "1-2 Family Dwelling": "1–2 family home",
+    "Other (Explain Below)": "Other (workbook category)",
+    "3+ Family Mixed Use Building": "3+ family mixed-use building",
+    "1-2 Family Mixed Use Building": "1–2 family mixed-use building"
+  };
+  const donutColors = ["#58dec4", "#90b2f7", "#ffc08a", "#bd9ef0", "#a8d991", "#768ba4"];
+  const tabs = [...document.querySelectorAll(".tab")];
+  let view = "summary";
+
+  function element(tag, value, className) {
+    const node = document.createElement(tag);
+    if (value !== undefined) node.textContent = value;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function aggregate(borough) {
+    const groups = borough ? [boroughs[borough]] : Object.values(boroughs);
+    const totals = {
+      total: 0, closed: 0, resolvedCount: 0, resolutionDays: 0,
+      monthly: Array(108).fill(null), properties: new Map(), zips: new Map(), pins: []
+    };
+    for (const group of groups) {
+      for (const field of ["total", "closed", "resolvedCount", "resolutionDays"]) {
+        totals[field] += group[field];
+      }
+      group.monthly.forEach((count, month) => {
+        if (count !== null) totals.monthly[month] = (totals.monthly[month] ?? 0) + count;
+      });
+      for (const [location, count] of Object.entries(group.properties)) {
+        totals.properties.set(location, (totals.properties.get(location) ?? 0) + count);
+      }
+      for (const [zip, [count, lat, lon]] of Object.entries(group.zips)) {
+        if (!totals.zips.has(zip)) totals.zips.set(zip, { zip, count: 0, latSum: 0, lonSum: 0, weight: 0 });
+        const summary = totals.zips.get(zip);
+        summary.count += count;
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          const weight = group.zipGeocoded[zip];
+          summary.latSum += lat * weight;
+          summary.lonSum += lon * weight;
+          summary.weight += weight;
+        }
+      }
+      totals.pins.push(...group.pins);
+    }
+    return totals;
+  }
+
+  function renderBoroughs(borough) {
+    const chart = document.getElementById("borough-chart");
+    const focused = chart.contains(document.activeElement) ? document.activeElement.dataset.borough : "";
+    chart.replaceChildren();
+    for (const name of chartBoroughs) {
+      const active = borough === name;
+      const included = !borough || active;
+      const count = boroughs[name].total;
+      const button = element("button", undefined, "bar-row" + (included ? "" : " out-of-scope"));
+      button.type = "button";
+      button.dataset.borough = name;
+      button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-label", name + (included ? ", " + num(count) + " sightings." : ", outside the current filter.") +
+        (active ? " Show all boroughs." : " Filter to " + name + "."));
+      const track = element("span", undefined, "bar-track");
+      const bar = element("span", undefined, "bar-fill");
+      bar.style.width = (included ? 100 * count / cityMax : 0) + "%";
+      track.append(bar);
+      button.append(element("span", name, "bar-name"), track, element("span", included ? num(count) : "—", "bar-count"));
+      button.addEventListener("click", () => {
+        filter.value = active ? "" : name;
+        render();
+      });
+      chart.append(button);
+      if (focused === name) button.focus({ preventScroll: true });
+    }
+    text("bar-subtitle", borough ? "Showing " + borough + " on the citywide scale." : "Reported sightings across the five boroughs.");
+    text("bar-note", borough
+      ? "Select any borough to change the filter. Select " + borough + " again to reset it."
+      : "Select a bar to filter the dashboard. " + num(boroughs.Unspecified.total) + " reports with no borough are included in citywide totals.");
+  }
+
+  function renderProperties(totals) {
+    const sorted = [...totals.properties.entries()]
+      .map(([name, count]) => ({ name: propertyNames[name] || name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    const shown = sorted.slice(0, 5);
+    if (sorted.length > 5) {
+      shown.push({ name: "Remaining location types", count: sorted.slice(5).reduce((sum, item) => sum + item.count, 0) });
+    }
+    const ring = document.getElementById("property-donut");
+    const legend = document.getElementById("property-legend");
+    ring.replaceChildren();
+    legend.replaceChildren();
+    const svgCircle = () => {
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", "92");
+      circle.setAttribute("cy", "92");
+      circle.setAttribute("r", "73");
+      circle.setAttribute("fill", "none");
+      circle.setAttribute("stroke-width", "23");
+      return circle;
+    };
+    const track = svgCircle();
+    track.setAttribute("stroke", "#223348");
+    ring.append(track);
+    const circumference = 2 * Math.PI * 73;
+    const buttons = [];
+    const segments = [];
+    let pinned = -1;
+    let angleOffset = 0;
+
+    function highlight(index) {
+      segments.forEach((segment, i) => segment.classList.toggle("dimmed", index >= 0 && i !== index));
+      buttons.forEach((button, i) => button.setAttribute("aria-pressed", String(pinned === i)));
+      text("donut-value", index < 0 ? num(totals.total) : percent(shown[index].count, totals.total));
+      text("donut-label", index < 0 ? "reports" : num(shown[index].count) + " reports");
+    }
+
+    shown.forEach((item, index) => {
+      const color = donutColors[index];
+      const size = circumference * item.count / totals.total;
+      const segment = svgCircle();
+      segment.classList.add("donut-segment");
+      segment.setAttribute("stroke", color);
+      segment.setAttribute("stroke-dasharray", Math.max(0.25, size - 2) + " " + circumference);
+      segment.setAttribute("stroke-dashoffset", -angleOffset);
+      segment.setAttribute("transform", "rotate(-90 92 92)");
+      angleOffset += size;
+      segment.addEventListener("pointerenter", () => highlight(index));
+      segment.addEventListener("pointerleave", () => highlight(pinned));
+      segment.addEventListener("click", () => {
+        pinned = pinned === index ? -1 : index;
+        highlight(pinned);
+      });
+      segments.push(segment);
+      ring.append(segment);
+
+      const button = element("button", undefined, "property-key");
+      button.type = "button";
+      button.setAttribute("aria-label", item.name + ", " + num(item.count) + " reports, " + percent(item.count, totals.total));
+      const swatch = element("span", undefined, "swatch");
+      swatch.style.backgroundColor = color;
+      button.append(swatch, element("span", item.name), element("span", percent(item.count, totals.total), "property-share"));
+      button.addEventListener("pointerenter", () => highlight(index));
+      button.addEventListener("pointerleave", () => highlight(pinned));
+      button.addEventListener("focus", () => highlight(index));
+      button.addEventListener("blur", () => highlight(pinned));
+      button.addEventListener("click", () => {
+        pinned = pinned === index ? -1 : index;
+        highlight(pinned);
+      });
+      buttons.push(button);
+      legend.append(button);
+    });
+    highlight(-1);
+    text("property-note", sorted.length
+      ? sorted[0].name + " leads with " + num(sorted[0].count) + " reports (" + percent(sorted[0].count, totals.total) + ")."
+      : "There are no reports in the current selection.");
+
+    const details = document.getElementById("property-details");
+    details.hidden = sorted.length <= 5;
+    const table = element("table");
+    table.setAttribute("aria-label", "All recorded location types");
+    const heading = table.createTHead().insertRow();
+    for (const title of ["Location type", "Reports", "Share"]) {
+      const header = element("th", title);
+      header.scope = "col";
+      heading.append(header);
+    }
+    const body = table.createTBody();
+    for (const item of sorted) {
+      const row = body.insertRow();
+      for (const value of [item.name, num(item.count), percent(item.count, totals.total)]) row.insertCell().textContent = value;
+    }
+    document.getElementById("property-table").replaceChildren(table);
+  }
+
+  function renderSummary(totals, borough) {
+    const lead = borough || chartBoroughs[0];
+    text("metric-total", num(totals.total));
+    text("metric-total-note", borough ? "Reported in " + borough : "Reported to NYC 311");
+    text("metric-borough", lead);
+    text("metric-borough-note", borough ? "Selected borough" : percent(boroughs[lead].total, totals.total) + " of citywide reports");
+    text("metric-closed", percent(totals.closed, totals.total));
+    text("metric-closed-note", num(totals.closed) + " marked Closed");
+    text("metric-days", totals.resolvedCount ? decimal.format(totals.resolutionDays / totals.resolvedCount) + " days" : "—");
+    text("metric-days-note", num(totals.resolvedCount) + " closed cases with usable dates");
+    renderBoroughs(borough);
+    renderProperties(totals);
+  }
+
+  function render() {
+    const borough = filter.value;
+    const scope = borough || "All Boroughs";
+    const totals = aggregate(borough);
+    text("scope-label", scope + " · " + num(totals.total) + " reports");
+    if (view === "summary") renderSummary(totals, borough);
+    if (view === "trends") window.renderTrends(totals.monthly, { scope, partialMonths, coverageEnd: end });
+    if (view === "map") {
+      const zipRows = [...totals.zips.values()].map(({ zip, count, weight, latSum, lonSum }) => ({
+        zip, count, lat: weight ? latSum / weight : null, lon: weight ? lonSum / weight : null
+      }));
+      const zipTotal = zipRows.reduce((sum, row) => sum + row.count, 0);
+      window.renderMap({ scope, zipRows, pins: totals.pins, zipTotal, sourceTotal: totals.total, borough });
+    }
+  }
+
+  function activate(tab) {
+    view = tab.id.replace("tab-", "");
+    for (const item of tabs) {
+      const selected = item === tab;
+      item.setAttribute("aria-selected", String(selected));
+      item.tabIndex = selected ? 0 : -1;
+      document.getElementById(item.getAttribute("aria-controls")).hidden = !selected;
+    }
+    render();
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => activate(tab));
+    tab.addEventListener("keydown", event => {
+      const index = tabs.indexOf(tab);
+      const next = { ArrowRight: (index + 1) % tabs.length, ArrowLeft: (index + tabs.length - 1) % tabs.length,
+        Home: 0, End: tabs.length - 1 }[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      tabs[next].focus();
+      activate(tabs[next]);
+    });
+  }
+  filter.addEventListener("change", render);
+  text("coverage-label", " · " + start + " to " + end);
+  const methods = [
+    ["Coverage", "Each workbook row is one 311 rat sighting report. The citywide view includes " + num(boroughs.Unspecified.total) +
+      " reports with no borough. Monthly counts use the date the case was created."],
+    ["Case outcomes", "The closed share uses the workbook’s recorded status. Average resolution time uses calendar days from creation to closure for cases marked Closed. " +
+      num(metadata.resolutionExclusions) + " closed cases without usable closure dates are excluded from that average."],
+    ["Map", "ZIP circles count reports with a valid recorded ZIP and use the mean location of reports with coordinates for that ZIP. " +
+      "The sample includes up to " + num(metadata.samplePerBorough) + " geocoded cases per borough, drawn across the workbook’s date range."]
+  ];
+  for (const [label, description] of methods) {
+    const paragraph = element("p");
+    paragraph.append(element("strong", label + ". "), description);
+    document.getElementById("methodology-body").append(paragraph);
+  }
+  render();
+})();
+  </script>
+</body>
+</html>
